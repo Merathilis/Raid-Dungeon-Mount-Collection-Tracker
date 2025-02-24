@@ -1,69 +1,99 @@
-# Mount-Collection
-# 🐉 Raid Mount Tracker - WoW Addon
+# 📋 Raid & Dungeon Mount Collection Tracker
 
-**Version:** 1.0  
-**Game:** World of Warcraft (Retail)  
-**Author:** knutballs 
-**Category:** Mount Collection, Raid Tracking  
-**Compatibility:** Latest WoW Retail Patch  
+**Raid & Dungeon Mount Collection Tracker** is a streamlined World of Warcraft addon designed to help players efficiently manage their mount farming runs. Whether you’re after that elusive raid drop or grinding dungeon bosses, this addon keeps you organized and informed every step of the way.
 
 ---
 
-## 📖 What is Raid Mount Tracker?
+## 🏆 **Key Features:**
 
-**Raid Mount Tracker** is a **World of Warcraft** addon that helps players **track raid mount drops**, manage **raid lockouts**, and monitor **mount collection progress**. The intuitive and color-coded UI provides a simple way to see which raid mounts you still need, which raids are locked out, and highlights available raids for farming.
+- ✅ **Tracks Raid & Dungeon Mounts**
+  - Displays all known raid and dungeon boss mounts.
+  - Clearly labels instances as **Raid** or **Dungeon**.
+  - Highlights **collected** and **uncollected** mounts.
 
----
+- ✅ **Lockout Timer Tracking**
+  - Real-time lockout status for raids.
+  - Lockout timers are color-coded:  
+    - 🟢 **Green** — Available  
+    - 🔴 **Red** — Locked  
+  - Timer format: **d h m** (*days, hours, minutes*).
 
-## 🧭 Features
+- ✅ **Compact, Customizable UI**
+  - Balanced spacing and aligned columns for easy reading.
+  - Color-coded indicators for mount status and dungeon/raid difficulty.
+  - Persistent **attempt counts** that save between sessions.
 
-- 🐎 **Complete Mount List**  
-  Displays all available **raid mounts** across expansions with detailed information on bosses, locations, and drop rates.
+- ✅ **Filters & Sorting**
+  - Dropdown filter to view **All**, **Collected**, or **Uncollected** mounts.
+  - Default filter shows **Uncollected** mounts upon opening.
 
-- 🟢🟥 **Color-Coded Raid Status**  
-  - 🟢 **Green** — Raids available for farming  
-  - 🟥 **Red** — Raids currently locked out (with lockout timer)  
-  - 🟣 **Purple** — Collected mounts  
-  - 🟠 **Orange** — Mythic Difficulty  
-  - 🔵 **Blue** — Heroic Difficulty  
-
-- 🕒 **Lockout Timers**  
-  Displays real-time raid lockouts, ensuring you never waste time entering locked raids.
-
-- 🖱️ **Mouseover Tooltips**  
-  Hover over mount entries to view:
-  - 🏆 Expansion Name  
-  - 🦴 Boss Name  
-  - 🐉 Mount Name  
-  - 🌍 Raid Location  
-  - 🎲 Drop Rate  
-  - 🕒 Lockout Timer or Availability  
-  - 💜 Collected Status  
-
-- 🎚️ **Filters**  
-  Easily filter the mount list to show:
-  - ✅ All Mounts  
-  - 💜 Collected  
-  - ❌ Uncollected  
-
-- 📊 **Collection Summary**  
-  View your total number of raid mounts and how many you’ve collected at the top of the UI.
-
-- 🖼️ **Movable & Resizable UI**  
-  Drag the interface to your preferred position and resize as needed.
+- ✅ **Tooltips for Quick Info**
+  - Hover over entries to view:  
+    - **Mount Name**  
+    - **Instance & Boss Name**  
+    - **Location**  
+    - **Drop Rate**  
+    - **Attempts**  
+    - **Lockout Timer**
 
 ---
 
-## 💬 Slash Commands
+## 💻 **How to Use:**
 
-- **`/rm`** — Open/close the Raid Mount Tracker UI.
+1. **Open the Addon UI:**  
+   ➔ Type `/rm` in chat.
+
+2. **Apply Filters:**  
+   ➔ Use the dropdown menu to filter between **All**, **Collected**, or **Uncollected**.
+
+3. **View Lockout Timers:**  
+   ➔ Automatically updates based on saved instances.
+
+4. **Track Mount Attempts:**  
+   ➔ Attempts persist between logins, helping you keep an accurate count.
 
 ---
 
-## 🛠️ Installation Guide
+## 🎨 **Color Coding:**
 
-1. **Download** the addon files.
-2. Extract and place the folder into:
+- 🟢 **Green** — Instance Available  
+- 🔴 **Red** — Locked Instance  
+- 🟣 **Purple** — Collected Mount  
+- 🟠 **Orange** — Mythic Difficulty  
+- 🔵 **Blue** — Heroic Difficulty  
+- 🟡 **Yellow** — Attempts Count
 
-   ```bash
-   World of Warcraft/_retail_/Interface/AddOns/
+---
+
+## 📊 **UI Layout Example:**
+
+| **Type**  | **Instance**             | **Mount Name**        | **Difficulty** | **Attempts** | **Lockout Timer** |
+|-----------|--------------------------|-----------------------|----------------|--------------|-------------------|
+| 🏰 Raid   | Sepulcher of the First Ones | Carcinized Zereth Steed | Heroic        | 12           | 4d 6h 12m         |
+| 🏛️ Dungeon | The Stonecore          | Vitreous Stone Drake   | Mythic        | 5            | Available         |
+
+---
+
+## 💡 **Why Use This Addon?**
+
+- Simplifies tracking of raid & dungeon mounts.  
+- Keeps you updated on lockouts and attempts.  
+- Helps you efficiently plan your farming runs.  
+- Clean, lightweight UI designed for mount collectors.
+
+---
+
+💖 **Good luck on your mount hunts, and may the RNG gods be in your favor!** 🚀
+
+
+
+
+
+
+
+## 📦 Dependencies
+- No external dependencies required.
+
+---
+
+
