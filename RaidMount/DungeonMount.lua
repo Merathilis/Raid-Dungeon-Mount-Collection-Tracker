@@ -1,0 +1,28 @@
+-- DungeonMount.lua
+
+DungeonMountData = {
+    { mountName = "Infinite Timereaver", itemID = 133543, mountID = 722, dungeonName = "Any Timewalking Dungeon", expansion = "Varies", bossName = "Any Boss", dropRate = "~1%", difficulty = "Timewalking", location = "Varies" },
+    { mountName = "Rivendare's Deathcharger", itemID = 13335, mountID = 240, dungeonName = "Stratholme", expansion = "Classic", bossName = "Lord Aurius Rivendare", dropRate = "~1%", difficulty = "Normal", location = "Eastern Plaguelands" },
+    { mountName = "Raven Lord", itemID = 32768, mountID = 250, dungeonName = "Sethekk Halls", expansion = "Burning Crusade", bossName = "Anzu", dropRate = "~1%", difficulty = "Heroic", location = "Terokkar Forest" },
+    { mountName = "Swift White Hawkstrider", itemID = 35513, mountID = 255, dungeonName = "Magister's Terrace", expansion = "Burning Crusade", bossName = "Kael'thas Sunstrider", dropRate = "~1%", difficulty = "Heroic", location = "Isle of Quel'Danas" },
+    { mountName = "Bronze Drake", itemID = 43951, mountID = 277, dungeonName = "Culling of Stratholme", expansion = "Wrath of the Lich King", bossName = "Infinite Corruptor", dropRate = "100%", difficulty = "Heroic", location = "Caverns of Time" },
+    { mountName = "Blue Proto-Drake", itemID = 44151, mountID = 264, dungeonName = "Utgarde Pinnacle", expansion = "Wrath of the Lich King", bossName = "Skadi the Ruthless", dropRate = "~1%", difficulty = "Heroic", location = "Howling Fjord" },
+    { mountName = "Vitreous Stone Drake", itemID = 63040, mountID = 349, dungeonName = "The Stonecore", expansion = "Cataclysm", bossName = "Slabhide", dropRate = "~1%", difficulty = "Normal", location = "Deepholm" },
+    { mountName = "Drake of the North Wind", itemID = 63041, mountID = 348, dungeonName = "The Vortex Pinnacle", expansion = "Cataclysm", bossName = "Altairus", dropRate = "~1%", difficulty = "Normal", location = "Uldum" },
+    { mountName = "Armored Razzashi Raptor", itemID = 68823, mountID = 362, dungeonName = "Zul'Gurub", expansion = "Cataclysm", bossName = "Bloodlord Mandokir", dropRate = "~1%", difficulty = "Heroic", location = "Northern Stranglethorn" },
+    { mountName = "Swift Zulian Panther", itemID = 68824, mountID = 363, dungeonName = "Zul'Gurub", expansion = "Cataclysm", bossName = "High Priestess Kilnara", dropRate = "~1%", difficulty = "Heroic", location = "Northern Stranglethorn" },
+    { mountName = "Smoldering Ember Wyrm", itemID = 142552, mountID = 902, dungeonName = "Return to Karazhan", expansion = "Legion", bossName = "Nightbane", dropRate = "~1%", difficulty = "Mythic", location = "Deadwind Pass" },
+    { mountName = "Midnight", itemID = 142236, mountID = 884, dungeonName = "Return to Karazhan", expansion = "Legion", bossName = "Attumen the Huntsman", dropRate = "~1%", difficulty = "Mythic", location = "Deadwind Pass" },
+    { mountName = "Tomb Stalker", itemID = 159921, mountID = 1040, dungeonName = "Kings' Rest", expansion = "Battle for Azeroth", bossName = "King Dazar", dropRate = "~1%", difficulty = "Mythic", location = "Zuldazar" },
+    { mountName = "Underrot Crawg", itemID = 160829, mountID = 1041, dungeonName = "The Underrot", expansion = "Battle for Azeroth", bossName = "Unbound Abomination", dropRate = "~1%", difficulty = "Mythic", location = "Nazmir" },
+    { mountName = "Sharkbait", itemID = 159842, mountID = 1039, dungeonName = "Freehold", expansion = "Battle for Azeroth", bossName = "Harlan Sweete", dropRate = "~1%", difficulty = "Mythic", location = "Tiragarde Sound" },
+    { mountName = "Aerial Unit R-21/X", itemID = 168830, mountID = 1227, dungeonName = "Operation: Mechagon", expansion = "Battle for Azeroth", bossName = "King Mechagon", dropRate = "~1%", difficulty = "Mythic", location = "Mechagon Island" },
+    { mountName = "Mechagon Peacekeeper", itemID = 168826, mountID = 1227, dungeonName = "Operation: Mechagon", expansion = "Battle for Azeroth", bossName = "HK-8 Aerial Oppression Unit", dropRate = "~1%", difficulty = "Mythic", location = "Mechagon Island" },
+    { mountName = "Marrowfang", itemID = 183617, mountID = 1321, dungeonName = "The Necrotic Wake", expansion = "Shadowlands", bossName = "Nalthor the Rimebinder", dropRate = "~1%", difficulty = "Mythic", location = "Bastion" },
+    { mountName = "Slime Serpent", itemID = nil, mountID = 1434, dungeonName = "Plaguefall", expansion = "Shadowlands", bossName = "Curious Slime Serpent", dropRate = "Special", difficulty = "Heroic/Mythic", location = "Maldraxxus" },
+    { mountName = "Cartel Master's Gearglider", itemID = 186638, mountID = 1466, dungeonName = "Tazavesh, the Veiled Market", expansion = "Shadowlands", bossName = "So'leah", dropRate = "~1%", difficulty = "Mythic", location = "Broker's Bazaar" },
+    { mountName = "Colossal Umbrahide Mawrat", itemID = 187183, mountID = 1478, dungeonName = "Torghast", expansion = "Shadowlands", bossName = "Various Bosses", dropRate = "Special", difficulty = "Layer 13+", location = "The Maw" },
+    { mountName = "Stonevault Mechsuit", itemID = 192622, mountID = 1579, dungeonName = "The Stonevault", expansion = "Dragonflight", bossName = "High Speaker Eirich", dropRate = "~1%", difficulty = "Mythic", location = "Thaldraszus" },
+    { mountName = "Wick", itemID = 192623, mountID = 1580, dungeonName = "Darkflame Cleft", expansion = "Dragonflight", bossName = "The Darkness", dropRate = "~1%", difficulty = "Mythic", location = "Zaralek Cavern" },
+    { mountName = "Prototype A.S.M.R.", itemID = 192624, mountID = 1581, dungeonName = "Liberation of Undermine", expansion = "Dragonflight", bossName = "Chrome King Gallywix", dropRate = "~1%", difficulty = "Mythic", location = "Undermine" }
+}
