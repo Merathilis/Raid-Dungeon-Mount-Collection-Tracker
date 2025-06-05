@@ -1,1 +1,23 @@
+name: Release WoW Addon
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Package and upload addon
+      uses: WowUpHub/release-wow-addon@v3
+      with:
+        addon-path: 'RaidMount'
+        curseforge-id: 'YOUR_CURSEFORGE_PROJECT_ID'
+        curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+        wago-token: ${{ secrets.WAGO_TOKEN }}
+        game-version: 'retail'
 
