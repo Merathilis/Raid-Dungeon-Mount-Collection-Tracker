@@ -9,14 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Package and upload addon
-      uses: WowUpHub/release-wow-addon@v3
-      with:
-        addon-path: 'RaidMount'
-        curseforge-id: '1204427'
-        curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+      - name: Package and upload addon
+        uses: WowUpHub/release-wow-addon@v3
+        with:
+          addon-path: 'RaidMount'
+          curseforge-id: '1204427'
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           wago-token: ${{ secrets.WAGO_TOKEN }}
           game-version: 'retail'
