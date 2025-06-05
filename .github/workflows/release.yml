@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Package and upload addon
-        uses: WowUpHub/release-wow-addon@v3
+        uses: wagoio/wago-action@v1
         with:
           addon-path: 'RaidMount'
           curseforge-id: '1204427'
