@@ -16,7 +16,7 @@ jobs:
       uses: WowUpHub/release-wow-addon@v3
       with:
         addon-path: 'RaidMount'
-        curseforge-id: 'YOUR_CURSEFORGE_PROJECT_ID'
+        curseforge-id: '1204427'
         curseforge-token: ${{ a830dcd2-9e1d-46a9-bc68-6f6585d5dba8 }}
         wago-token: ${{ fJjOOawNq0HzaFGz6rppP74MAC3CMqIDcPHkb4rl }}
         game-version: 'retail'
