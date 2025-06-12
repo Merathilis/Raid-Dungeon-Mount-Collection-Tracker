@@ -1,16 +1,24 @@
 local addonName, RaidMount = ...
 RaidMount = RaidMount or {}
 
+-- Helper function for consistent addon messages
+local function PrintAddonMessage(message, isError)
+    local prefix = isError and "|cFFFF0000RaidMount Error:|r" or "|cFF33CCFFRaidMount:|r"
+    print(prefix .. " " .. message)
+end
+
 -- Default settings
 RaidMountSettings = RaidMountSettings or {
     showTooltips = true,
     showMinimapButton = true,
     soundOnDrop = true,
     compactMode = false,
-    fontSize = 11,
+
     filterDefault = "Uncollected",
     hasScannedCollection = false,
-    minimapButtonAngle = 220
+    minimapButtonAngle = 220,
+    debugPerformance = false,
+    uiScale = 1.0
 }
 
 -- Initialize attempts storage
@@ -20,7 +28,7 @@ RaidMountAttempts = RaidMountAttempts or {}
 local ADDON_VERSION = "02.06.25.02"
 if not RaidMountSettings.version or RaidMountSettings.version ~= ADDON_VERSION then
     RaidMountSettings.version = ADDON_VERSION
-    print("|cFF33CCFFRaidMount|r: Updated to version " .. ADDON_VERSION)
+    PrintAddonMessage("Updated to version " .. ADDON_VERSION)
 end
 
 -- Ensure mountInstances is loaded
@@ -43,7 +51,7 @@ local function ScanExistingMountCollection()
         return
     end
     
-    print("|cFF33CCFFRaidMount:|r Scanning your mount collection for the first time...")
+    PrintAddonMessage("Scanning your mount collection for the first time...")
     
     RaidMount.RefreshMountCollection()
     
@@ -159,7 +167,7 @@ local function InitializeAddon()
     end
 end
 
--- Statistics System Functions (like Rarity)
+-- Statistics System Functions
 local function GetStatisticValue(statisticId)
     if not statisticId then return 0 end
     
@@ -304,7 +312,7 @@ eventFrame:SetScript("OnEvent", function(self, event, addonName)
             end
         end
     elseif event == "PLAYER_LOGIN" or event == "UPDATE_EXPANSION_LEVEL" then
-        -- Initialize addon after player login when statistics are available
+        -- Initialize after player login when statistics are available
         C_Timer.After(2, function()
             InitializeAddon()
             InitializeFromStatistics()
@@ -500,21 +508,15 @@ end
 
 -- Slash command handler
 SLASH_RAIDMOUNT1 = "/rm"
-SLASH_RAIDMOUNT2 = "/raidmount"
 
 SlashCmdList["RAIDMOUNT"] = function(msg)
     local command = msg:lower():trim()
     
     if command == "" then
         RaidMount.ShowUI()
-    elseif command == "settings" then
-        RaidMount.ShowSettingsPanel()
-    elseif command == "reset" then
-        StaticPopup_Show("RAIDMOUNT_RESET_CONFIRM")
-    elseif command == "rescan" then
-        print("|cFF33CCFFRaidMount:|r Rescanning mount collection...")
-        RaidMountSettings.hasScannedCollection = false
-        RaidMount.RefreshMountCollection()
+    else
+        -- Only show UI for any other command
+        RaidMount.ShowUI()
     end
 end
 
@@ -598,14 +600,7 @@ function RaidMount.ShowDropMountWindow(dropMounts)
     print(string.format("|cFF33CCFFRaidMount:|r Found %d boss drop mounts. Window opened for easy copying!", #dropMounts))
 end
 
--- Print help function
-function RaidMount.PrintHelp()
-    print("|cFF33CCFFRaidMount Commands:|r")
-    print("  |cFFFFFF00/rm|r - Open the mount tracker")
-    print("  |cFFFFFF00/rm settings|r - Open settings panel")
-    print("  |cFFFFFF00/rm rescan|r - Rescan your mount collection")
-    print("  |cFFFFFF00/rm reset|r - Reset all attempt data")
-end
+-- Removed PrintHelp function - all functionality moved to settings UI
 
 
 

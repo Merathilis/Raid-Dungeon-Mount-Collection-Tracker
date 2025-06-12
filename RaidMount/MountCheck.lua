@@ -4,7 +4,7 @@ RaidMount = RaidMount or {}
 --  Cache to avoid duplicate checks
 RaidMount.MountCache = {}
 
--- Rarity-style mount detection: Scan journal and match by Spell ID
+-- Mount detection: Scan journal and match by Spell ID
 function RaidMount.RefreshMountCollection()
     -- Clear cache first
     RaidMount.ClearMountCache()
@@ -12,7 +12,7 @@ function RaidMount.RefreshMountCollection()
     local collectedCount = 0
     local totalChecked = 0
     
-    -- Get all collected mounts from journal (like Rarity does)
+    -- Get all collected mounts from journal
     local collectedSpellIDs = {}
     local mountIDs = C_MountJournal.GetMountIDs()
     
@@ -26,7 +26,7 @@ function RaidMount.RefreshMountCollection()
         end
     end
     
-    -- Check all mounts by matching Spell IDs (Rarity method)
+    -- Check all mounts by matching Spell IDs
     for _, mount in ipairs(RaidMount.mountInstances or {}) do
         if mount.spellID then
             totalChecked = totalChecked + 1
