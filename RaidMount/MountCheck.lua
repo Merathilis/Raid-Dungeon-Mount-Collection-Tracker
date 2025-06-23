@@ -55,9 +55,7 @@ function RaidMount.RefreshMountCollection()
         end
     end
     
-    if RaidMountSettings and RaidMountSettings.debugMode then
-        print(string.format("|cFF33CCFFRaidMount:|r Mount collection refreshed! Found %d/%d collected mounts.", collectedCount, totalChecked))
-    end
+
     
     -- Update UI if it's open
     if RaidMount.PopulateUI then

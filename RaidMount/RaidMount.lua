@@ -1,31 +1,31 @@
 local addonName, RaidMount = ...
 RaidMount = RaidMount or {}
 
+local RAIDMOUNT_PREFIX = "|cFF33CCFFRaid|r|cFFFF0000Mount|r"
+
 -- Helper function for consistent addon messages
 local function PrintAddonMessage(message, isError)
     local prefix = isError and "|cFFFF0000RaidMount Error:|r" or "|cFF33CCFFRaidMount:|r"
-    print(prefix .. " " .. message)
+    print(RAIDMOUNT_PREFIX .. " " .. message)
 end
 
--- Default settings
+
 RaidMountSettings = RaidMountSettings or {
     showTooltips = true,
-    showMinimapButton = true,
     soundOnDrop = true,
     compactMode = false,
 
     filterDefault = "Uncollected",
     hasScannedCollection = false,
-    minimapButtonAngle = 220,
     debugPerformance = false,
     uiScale = 1.0
 }
 
--- Initialize attempts storage
+
 RaidMountAttempts = RaidMountAttempts or {}
 
--- Version check and migration
-local ADDON_VERSION = "02.06.25.02"
+
+local ADDON_VERSION = "24.06.27.03"
 if not RaidMountSettings.version or RaidMountSettings.version ~= ADDON_VERSION then
     RaidMountSettings.version = ADDON_VERSION
     PrintAddonMessage("Updated to version " .. ADDON_VERSION)
@@ -33,13 +33,13 @@ end
 
 -- Ensure mountInstances is loaded
 if not RaidMount.mountInstances then
-    print("|cFFFF0000RaidMount Error:|r mountInstances is nil! Ensure MountData.lua is loaded.")
+    print(RAIDMOUNT_PREFIX .. " Error:|r mountInstances is nil! Ensure MountData.lua is loaded.")
     RaidMount.mountInstances = {}
 end
 
 -- Ensure required functions exist
 if not RaidMount.PlayerHasMount or not RaidMount.GetRaidLockout then
-    print("|cFFFF0000RaidMount Error:|r Required functions missing! Ensure MountCheck.lua and LockoutCheck.lua are loaded.")
+    print(RAIDMOUNT_PREFIX .. " Error:|r Required functions missing! Ensure MountCheck.lua and LockoutCheck.lua are loaded.")
     return
 end
 
@@ -58,7 +58,7 @@ local function ScanExistingMountCollection()
     RaidMountSettings.hasScannedCollection = true
 end
 
--- Cache player info to avoid repeated function calls
+
 local cachedPlayerInfo = nil
 local function GetCachedPlayerInfo()
     if not cachedPlayerInfo then
@@ -67,107 +67,16 @@ local function GetCachedPlayerInfo()
     return cachedPlayerInfo
 end
 
-local function CreateMinimapButton()
-    if RaidMount.MinimapButton then return end
-    
-    RaidMount.MinimapButton = CreateFrame("Button", "RaidMountMinimapButton", Minimap)
-    RaidMount.MinimapButton:SetSize(32, 32)
-    RaidMount.MinimapButton:SetFrameStrata("MEDIUM")
-    RaidMount.MinimapButton:SetFrameLevel(8)
-    RaidMount.MinimapButton:RegisterForClicks("AnyUp")
-    RaidMount.MinimapButton:RegisterForDrag("LeftButton")
-    
-    RaidMount.MinimapButton.icon = RaidMount.MinimapButton:CreateTexture(nil, "BACKGROUND")
-    RaidMount.MinimapButton.icon:SetSize(20, 20)
-    RaidMount.MinimapButton.icon:SetPoint("CENTER", 0, 0)
-    RaidMount.MinimapButton.icon:SetTexture("Interface\\Icons\\Ability_Mount_Drake_Proto")
-    
-    RaidMount.MinimapButton.border = RaidMount.MinimapButton:CreateTexture(nil, "OVERLAY")
-    RaidMount.MinimapButton.border:SetSize(32, 32)
-    RaidMount.MinimapButton.border:SetPoint("CENTER", 0, 0)
-    RaidMount.MinimapButton.border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
-    
-    local angle = RaidMountSettings.minimapButtonAngle or 220
-    local radius = 80
-    local x = math.cos(math.rad(angle)) * radius
-    local y = math.sin(math.rad(angle)) * radius
-    RaidMount.MinimapButton:SetPoint("CENTER", Minimap, "CENTER", x, y)
-    
-    RaidMount.MinimapButton:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:SetText("|cFF33CCFFRaidMount|r", 1, 1, 1)
-        GameTooltip:AddLine("Left-click: Toggle mount tracker", 1, 1, 1)
-        GameTooltip:AddLine("Right-click: Toggle settings", 1, 1, 1)
-        GameTooltip:AddLine("Shift-click: Reset all data", 1, 0.5, 0.5)
-        GameTooltip:Show()
-    end)
-    
-    RaidMount.MinimapButton:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-    
-    RaidMount.MinimapButton:SetScript("OnClick", function(self, button)
-        if button == "LeftButton" then
-            if IsShiftKeyDown() then
-                StaticPopup_Show("RAIDMOUNT_RESET_CONFIRM")
-            else
-                if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() then
-                    RaidMount.RaidMountFrame:Hide()
-                else
-                    RaidMount.ShowUI()
-                end
-            end
-        elseif button == "RightButton" then
-            if RaidMount.SettingsFrame and RaidMount.SettingsFrame:IsShown() then
-                RaidMount.SettingsFrame:Hide()
-            else
-                RaidMount.ShowSettingsPanel()
-            end
-        end
-    end)
-    
-    RaidMount.MinimapButton:SetScript("OnDragStart", function(self)
-        self:SetScript("OnUpdate", function(self)
-            local mx, my = Minimap:GetCenter()
-            local px, py = GetCursorPosition()
-            local scale = Minimap:GetEffectiveScale()
-            px, py = px / scale, py / scale
-            
-            local angle = math.deg(math.atan2(py - my, px - mx))
-            if angle < 0 then angle = angle + 360 end
-            
-            RaidMountSettings.minimapButtonAngle = angle
-            
-            local radius = 80
-            local x = math.cos(math.rad(angle)) * radius
-            local y = math.sin(math.rad(angle)) * radius
-            self:SetPoint("CENTER", Minimap, "CENTER", x, y)
-        end)
-    end)
-    
-    RaidMount.MinimapButton:SetScript("OnDragStop", function(self)
-        self:SetScript("OnUpdate", nil)
-    end)
-    
-    if RaidMountSettings.showMinimapButton ~= false then
-        RaidMount.MinimapButton:Show()
-    else
-        RaidMount.MinimapButton:Hide()
-    end
-end
-
 local function InitializeAddon()
-    CreateMinimapButton()
-    
     ScanExistingMountCollection()
     
     if not RaidMountSettings.seenWelcome then
         RaidMountSettings.seenWelcome = true
-        print("|cFF33CCFFRaidMount|r v" .. ADDON_VERSION .. " loaded! Use |cFFFFFF00/rm|r to open the mount tracker.")
+        print(RAIDMOUNT_PREFIX .. " v" .. ADDON_VERSION .. " loaded! Use |cFFFFFF00/rm|r to open the mount tracker.")
     end
 end
 
--- Statistics System Functions
+
 local function GetStatisticValue(statisticId)
     if not statisticId then return 0 end
     
@@ -178,14 +87,14 @@ local function GetStatisticValue(statisticId)
     return 0
 end
 
--- Initialize attempt counts from Blizzard statistics
+
 local function InitializeFromStatistics()
     if not RaidMountSettings.statisticsInitialized then
-        print("|cFF33CCFFRaidMount:|r Initializing attempt counts from Blizzard statistics...")
+
         
         local initializedCount = 0
         for _, mount in ipairs(mountInstances) do
-            local attemptData = RaidMountAttempts[mount.mountID]
+            local attemptData = RaidMountAttempts[mount.spellID]
             if attemptData and mount.statisticIds and not attemptData.statisticsInitialized then
                 local maxAttempts = 0
                 
@@ -205,7 +114,7 @@ local function InitializeFromStatistics()
         end
         
         if initializedCount > 0 then
-            print("|cFF33CCFFRaidMount:|r Initialized " .. initializedCount .. " mounts with statistics data")
+    
         end
         
         RaidMountSettings.statisticsInitialized = true
@@ -214,13 +123,13 @@ end
 
 -- Verify attempt counts against statistics (backup system)
 function RaidMount.VerifyStatistics()
-    print("|cFF33CCFFRaidMount:|r Verifying attempt counts against Blizzard statistics...")
+    
     
     local verifiedCount = 0
     local correctedCount = 0
     
     for _, mount in ipairs(mountInstances) do
-        local attemptData = RaidMountAttempts[mount.mountID]
+        local attemptData = RaidMountAttempts[mount.spellID]
         if attemptData and mount.statisticIds then
             local maxStatValue = 0
             
@@ -243,8 +152,7 @@ function RaidMount.VerifyStatistics()
         end
     end
     
-    print(string.format("|cFF33CCFFRaidMount:|r Verified %d mounts, corrected %d attempt counts", 
-        verifiedCount, correctedCount))
+    
 end
 
 -- Enhanced attempt tracking with statistics backup
@@ -263,7 +171,7 @@ local function RecordAttemptWithStatistics(mount, characterID, currentTime)
         RaidMountAttempts[trackingKey] = attemptData
     end
 
-    local hasMount = RaidMount.PlayerHasMount(mount.mountID, mount.itemID, mount.spellID)
+    local hasMount = RaidMount.PlayerHasMount(mount.MountID, mount.itemID, mount.spellID)
     if hasMount and not attemptData.collected then
         attemptData.collected = true
         if RaidMountSettings.soundOnDrop then
@@ -301,8 +209,8 @@ eventFrame:SetScript("OnEvent", function(self, event, addonName)
     if event == "ADDON_LOADED" and addonName == "RaidMount" then
         -- Initialize attempts for all mounts
         for _, mount in ipairs(mountInstances) do
-            if not RaidMountAttempts[mount.mountID] then
-                RaidMountAttempts[mount.mountID] = {
+            if not RaidMountAttempts[mount.spellID] then
+                RaidMountAttempts[mount.spellID] = {
                     total = 0,
                     characters = {},
                     lastAttempt = nil,
@@ -329,9 +237,13 @@ bossKillFrame:RegisterEvent("NEW_MOUNT_ADDED")
 bossKillFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "NEW_MOUNT_ADDED" then
         C_Timer.After(0.5, function()
-            print("|cFF33CCFFRaidMount:|r New mount detected! Refreshing collection status...")
+            print(RAIDMOUNT_PREFIX .. ":|r New mount detected! Refreshing collection status...")
             RaidMount.ClearMountCache()
             RaidMount.RefreshMountCollection()
+            -- Invalidate static cache since mount collection changed
+            if RaidMount.InvalidateStaticData then
+                RaidMount.InvalidateStaticData()
+            end
         end)
         return
     end
@@ -363,7 +275,10 @@ bossKillFrame:SetScript("OnEvent", function(self, event, ...)
     end
     
     if hasFoundMatch then
-        -- Encounter processed successfully
+        -- Encounter processed successfully - invalidate static cache since attempt data changed
+        if RaidMount.InvalidateStaticData then
+            RaidMount.InvalidateStaticData()
+        end
     end
 end)
 
@@ -417,7 +332,7 @@ function RaidMount.ResetAttempts(mount)
             lastAttempt = nil,
             collected = false
         }
-        print("|cFF33CCFFRaidMount:|r Attempts for mount ID " .. trackingKey .. " have been reset.")
+        print(RAIDMOUNT_PREFIX .. ":|r Attempts for mount ID " .. trackingKey .. " have been reset.")
     else
         -- Reset all attempts
         for id, _ in pairs(RaidMountAttempts) do
@@ -428,7 +343,12 @@ function RaidMount.ResetAttempts(mount)
                 collected = false
             }
         end
-        print("|cFF33CCFFRaidMount:|r All attempts have been reset.")
+        print(RAIDMOUNT_PREFIX .. ":|r All attempts have been reset.")
+    end
+    
+    -- Invalidate static cache since attempt data changed
+    if RaidMount.InvalidateStaticData then
+        RaidMount.InvalidateStaticData()
     end
 end
 
@@ -469,7 +389,7 @@ function RaidMount.GetFormattedMountData()
         
         -- Double-check with live mount journal if not marked as collected
         if not hasMount then
-            hasMount = RaidMount.PlayerHasMount(mount.mountID, mount.itemID, mount.spellID)
+            hasMount = RaidMount.PlayerHasMount(mount.MountID, mount.itemID, mount.spellID)
             -- Update stored data if we found it's actually collected
             if hasMount and attemptData then
                 attemptData.collected = true
@@ -488,7 +408,7 @@ function RaidMount.GetFormattedMountData()
             collected = hasMount,
             attempts = attempts,
             lastAttempt = lastAttempt,
-            mountID = mount.mountID,
+            mountID = mount.MountID,
             spellID = mount.spellID,
             itemID = mount.itemID,
             type = "Raid"
@@ -565,6 +485,12 @@ function RaidMount.ShowDropMountWindow(dropMounts)
         closeButton:SetPoint("BOTTOMRIGHT", -20, 10)
         closeButton:SetText("Close")
         closeButton:SetScript("OnClick", function()
+            -- Clean up header frame before hiding
+            if RaidMount.HeaderFrame then
+                RaidMount.HeaderFrame:Hide()
+                RaidMount.HeaderFrame:SetParent(nil)
+                RaidMount.HeaderFrame = nil
+            end
             RaidMount.DropMountFrame:Hide()
         end)
         
@@ -587,7 +513,7 @@ function RaidMount.ShowDropMountWindow(dropMounts)
     for _, mount in ipairs(dropMounts) do
         local statusIcon = mount.isCollected and "✓" or "✗"
         textContent = textContent .. string.format("%s %s (MountID: %d, SpellID: %d)\n", 
-            statusIcon, mount.name, mount.mountID, mount.spellID)
+            statusIcon, mount.name, mount.MountID, mount.spellID)
     end
     
     -- Set the text and adjust height
@@ -597,10 +523,47 @@ function RaidMount.ShowDropMountWindow(dropMounts)
     -- Show the window
     RaidMount.DropMountFrame:Show()
     
-    print(string.format("|cFF33CCFFRaidMount:|r Found %d boss drop mounts. Window opened for easy copying!", #dropMounts))
+    print(RAIDMOUNT_PREFIX .. ":|r Found " .. #dropMounts .. " boss drop mounts. Window opened for easy copying!")
 end
 
 -- Removed PrintHelp function - all functionality moved to settings UI
+
+-- Performance monitoring system
+RaidMount.performanceStats = RaidMount.performanceStats or {
+    tooltipCache = {hits = 0, misses = 0},
+    textureCache = {hits = 0, misses = 0},
+    updateCount = 0,
+    lastUpdateTime = 0,
+    frameTime = 0
+}
+local performanceStats = RaidMount.performanceStats
+
+function RaidMount.GetPerformanceStats()
+    local stats = {
+        tooltipCache = RaidMount.GetTooltipCacheStats(),
+        textureCache = {
+            size = RaidMount.textureCache and #RaidMount.textureCache or 0,
+            hits = performanceStats.textureCache.hits,
+            misses = performanceStats.textureCache.misses
+        },
+        updates = performanceStats.updateCount,
+        frameTime = performanceStats.frameTime
+    }
+    return stats
+end
+
+function RaidMount.ResetPerformanceStats()
+    performanceStats = {
+        tooltipCache = {hits = 0, misses = 0},
+        textureCache = {hits = 0, misses = 0},
+        updateCount = 0,
+        lastUpdateTime = 0,
+        frameTime = 0
+    }
+    RaidMount.ClearTooltipCache()
+end
+
+
 
 
 
