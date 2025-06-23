@@ -1,150 +1,145 @@
-# 📋 Raid & Dungeon Mount Collection Tracker
+# 🎮 **RaidMount Addon - Complete UI Capabilities**
 
-**Raid & Dungeon Mount Collection Tracker** is a comprehensive World of Warcraft addon designed to help players efficiently manage their mount farming across all expansions. Whether you're after that elusive raid drop or grinding dungeon bosses, this addon keeps you organized and informed with accurate tracking and detailed progress information.
+## **🖥️ Main Interface Window**
 
----
+### **📊 Header & Navigation**
+- **Mount Progress Bar**: Visual progress display with `█` characters showing collection percentage
+- **Real-time Mount Counter**: Shows `🐴 90 🏆 45 📊 50.0% [████████████████████]` format
+- **Two View Modes**: Toggle between Mount List and Statistics views
 
-## 🏆 **Key Features:**
+### **🔍 Advanced Filtering System**
+- **Status Filter**: All, Collected, Uncollected
+- **Expansion Filter**: All expansions from Classic to The War Within
+- **Content Type Filter**: All, Raid, Dungeon, World, Holiday, Special
+- **Live Search Box**: Real-time search with 300ms throttling for performance
+- **Smart Search**: Searches mount names, raid names, and boss names simultaneously
 
-- ✅ **Comprehensive Mount Database**
-  - Tracks **80 boss drop mounts** across all expansions (Classic through The War Within)
-  - Organized by content type with clear section headers:
-    - 🏰 **Raid Mounts** (38 mounts)
-    - ⚔️ **Dungeon Mounts** (18 mounts) 
-    - 🌍 **World Boss Mounts** (9 mounts)
-    - ⭐ **Special Mounts** (1 mount)
-    - 🎉 **Holiday Event Mounts** (4 mounts)
+### **📋 Mount List Display**
 
-- ✅ **Smart Mount Detection**
-  - Integrates with Blizzard Mount Journal for accurate collection status
-  - Real-time updates when new mounts are obtained
-  - Proper Spell ID matching for reliable detection
-
-- ✅ **Account-Wide Attempt Tracking**
-  - Automatic boss kill detection and attempt counting
-  - **Per-character breakdown** shown in detailed tooltips
-  - Persistent data that saves between sessions
-  - Integration with Blizzard statistics for backup accuracy
-
-- ✅ **Lockout Timer Tracking**
-  - Real-time lockout status for raids and dungeons
-  - Color-coded timers:  
-    - 🟢 **Green** — Available to run
-    - 🔴 **Red** — Currently locked
-  - Helps optimize your farming schedule
-
-- ✅ **Enhanced UI Experience**
-  - **Compact and Full display modes** for different preferences
-  - **Word wrapping** for long mount names
-  - **Customizable font sizing** (8-16pt)
-  - **Organized sectioned display** with colored headers
-  - **Minimap button** for quick access
-
-- ✅ **Advanced Filtering & Sorting**
-  - Filter by: **All**, **Collected**, **Uncollected**
-  - Filter by **Expansion** (TBC through The War Within)
-  - **Search functionality** for quick mount lookup
-  - **Sortable columns** with visual indicators
-
-- ✅ **Detailed Tooltips**
-  - Hover over any mount to view:
-    - **Total attempts** across all characters
-    - **Character-specific attempt breakdown**
-    - **Drop rate and difficulty information**
-    - **Last attempt date**
-    - **Collection status and lockout info**
-    - **Mount/Spell/Item IDs** for reference
-
----
-
-## 💻 **How to Use:**
-
-1. **Open the Addon:**  
-   ➔ Type `/rm` in chat or click the minimap button
-
-2. **Customize Your View:**  
-   ➔ Use filters to show only the mounts you need
-   ➔ Switch between compact and full display modes
-   ➔ Adjust font size in settings (`/rm settings`)
-
-3. **Track Your Progress:**  
-   ➔ Attempts are automatically recorded when you kill bosses
-   ➔ View character-specific progress in tooltips
-   ➔ Monitor lockout timers to plan your runs
-
-4. **Manage Your Data:**  
-   ➔ `/rm rescan` - Refresh mount collection status  
-   ➔ `/rm reset` - Reset all attempt data (with confirmation)
-
----
-
-## 🎨 **Color Coding:**
-
-**Mount Status:**
-- 🔴 **Red** — Collected (you already have it)
-- 🟢 **Green** — Not Collected (still farming)
-
-**Lockout Status:**
-- 🟢 **Green** — Instance Available  
-- 🔴 **Red** — Currently Locked
-
-**Difficulty Colors:**
-- 🟠 **Orange** — Mythic Difficulty  
-- 🔵 **Blue** — Heroic Difficulty  
-- ⚪ **White** — Normal/Other Difficulties
-
-**Section Headers:**
-- 🟡 **Gold** — Raid Mounts
-- 🔵 **Blue** — Dungeon Mounts  
-- 🟢 **Green** — World Boss Mounts
-- 🩷 **Pink** — Special Mounts
-- 🟠 **Orange** — Holiday Event Mounts
-
----
-
-## 📊 **Enhanced UI Display:**
-
-The addon now features organized sections with clear groupings:
-
+#### **🎛️ Two Display Modes**
+**Compact Mode (6 columns):**
 ```
-🏰 Raid Mounts
-  Invincible          | Icecrown Citadel    | The Lich King     | 25 | Missing    | 2d 4h 15m
-  Ashes of Al'ar      | Tempest Keep        | Kael'thas         | 8  | Missing    | Available
-
-⚔️ Dungeon Mounts  
-  Raven Lord          | Sethekk Halls       | Anzu             | 15 | Missing    | Available
-  Blue Proto-Drake    | Utgarde Pinnacle    | Skadi            | 3  | Collected  | Available
+Mount Name | Raid/Dungeon | Boss | Attempts | Status | Reset Timer
 ```
 
+**Full Mode (10 columns):**
+```
+Mount Name | Raid/Dungeon | Boss | Expansion | Difficulty | Drop Rate | Attempts | Status | Reset Timer | Last Attempt
+```
+
+#### **🎨 Color Coding System**
+- **Mount Names**: 🟢 Green (collected) / ⚪ White (uncollected)
+- **Status Column**: 🟢 "Collected" / 🔴 "Missing"
+- **Difficulty**: Color-coded by difficulty level
+- **Reset Timers**: 🟢 Available / 🔴 Locked with countdown
+- **Row Backgrounds**: Alternating dark colors with hover highlighting
+
+#### **⚡ Performance Features**
+- **Virtual Scrolling**: Only renders visible rows (30 max in memory)
+- **Texture Preloading**: Smart preloading based on scroll direction
+- **50ms Scroll Throttling**: Smooth scrolling without performance hits
+- **Row Pooling**: Reuses UI elements to prevent memory leaks
+
+### **🖱️ Interactive Features**
+- **Sortable Columns**: Click headers to sort by any column
+- **Left-Click Mount Preview**: Opens DressUp frame (when available)
+- **Hover Tooltips**: Detailed information on mouse-over
+- **Smooth Scrolling**: Optimized scroll wheel support
+
+## **📈 Statistics View**
+
+### **📊 Comprehensive Analytics**
+- **Overall Statistics**:
+  - Total mounts, collected count, missing count
+  - Total attempts across all characters
+  - Average attempts per mount
+  - Collection percentage with visual progress
+
+- **By Expansion Breakdown**:
+  - Chronologically ordered (Classic → The War Within)
+  - Collected/Total ratio per expansion
+  - Total attempts per expansion
+  - Percentage completion per expansion
+
+- **By Difficulty Analysis**:
+  - Normal, Heroic, Mythic, World difficulty stats
+  - Collection rates by difficulty
+  - Attempt distribution by difficulty
+
+- **By Raid/Dungeon Breakdown**:
+  - Individual instance statistics
+  - Most/least attempted content
+  - Success rates per instance
+
+- **Top Attempted Mounts**:
+  - Ranked list of most attempted mounts
+  - Shows attempts, collection status, source
+  - Helps identify "unlucky" mounts
+
+## **🛠️ Settings Panel**
+
+### **⚙️ UI Customization**
+- **Compact Mode Toggle**: Switch between 6 and 10 column displays
+- **Enhanced Tooltips Toggle**: Enable/disable detailed hover information
+- **UI Scale Slider**: 0.5x to 2.5x scaling with real-time preview
+  - Color-coded scale display (Yellow for small, Orange for large)
+  - Smooth drag-only updates, applies on mouse release
+  - Rounded to nearest 0.01 for precision
+
+### **🔧 Utility Functions**
+- **Rescan Mounts**: Force refresh of mount collection from Blizzard API
+- **Refresh Data**: Clear all caches and reload mount database
+- **Reset All Data**: Nuclear option to clear all attempt tracking (with confirmation)
+
+## **💡 Enhanced Tooltips**
+
+### **📋 Tooltip Information Display**
+- **Mount Name**: Color-coded by collection status
+- **Source Information**: Raid/dungeon name, boss name, difficulty
+- **Mount Description**: Word-wrapped lore text (60 chars per line)
+- **Drop Rate**: Estimated percentage chance
+- **Total Attempts**: Account-wide attempt count
+- **Character Breakdown**: 
+  - Shows up to 8 characters with most attempts
+  - Sorted by highest attempts first
+  - `"...and X more"` for additional characters
+- **Last Attempt Date**: When you last tried for this mount
+- **Collection Status**: Clear collected/missing indicator
+- **Mount/Spell/Item IDs**: For reference and debugging
+
+### **🚀 Tooltip Performance**
+- **50-Tooltip Cache**: Stores pre-built tooltips for instant display
+- **Cache Hit/Miss Tracking**: Monitors performance efficiency
+- **Smart Cache Keys**: Based on mount ID, collection status, and lockout state
+
+## **🎮 User Experience Features**
+
+### **⌨️ Keyboard & Mouse**
+- **Single Command**: `/rm` opens the addon
+- **ESC Key Support**: Closes the window like other Blizzard frames
+- **Mouse Wheel Scrolling**: Smooth virtual scrolling
+- **Click-to-Sort**: Any column header for instant sorting
+- **Hover Highlighting**: Visual feedback on all interactive elements
+
+### **🔄 Real-Time Updates**
+- **Live Mount Detection**: Automatically updates when you obtain a mount
+- **Dynamic Lockout Timers**: Real-time countdown displays
+- **Instant Filter Response**: 300ms throttled search for smooth typing
+- **Cross-Character Sync**: Attempt tracking across all your characters
+
+### **🎨 Visual Polish**
+- **Black Theme**: Sleek dark interface that matches WoW's aesthetic
+- **Consistent Branding**: Blue/red RaidMount colors throughout
+- **Professional Icons**: Uses WoW's built-in texture library
+- **Smooth Animations**: Hover effects and state transitions
+- **Responsive Layout**: Adapts to different UI scales and screen sizes
+
+## **⚡ Technical Excellence**
+- **Memory Efficient**: Object pooling and smart caching prevent memory leaks
+- **CPU Optimized**: Virtual scrolling, throttled updates, and async processing
+- **Error Resilient**: Extensive error handling and graceful degradation
+- **Self-Correcting**: Cross-verifies data with Blizzard statistics
+- **Production Ready**: Clean codebase optimized for distribution
+
 ---
 
-## 💡 **Why Choose This Addon?**
-
-- **Most accurate mount detection** using proper Blizzard APIs
-- **Account-wide tracking** with character-specific insights  
-- **Clean, organized interface** designed by mount collectors, for mount collectors
-- **Comprehensive database** covering all obtainable boss drop mounts
-- **Smart lockout management** to maximize your farming efficiency
-- **Lightweight and performance-optimized** with minimal memory footprint
-
----
-
-## 🔧 **Recent Major Updates (v02.06.25.02):**
-
-- ✅ Complete database overhaul with accurate mount detection
-- ✅ Enhanced character-specific attempt tracking in tooltips  
-- ✅ Organized display with content type groupings
-- ✅ Improved UI with word wrapping and better visual consistency
-- ✅ Streamlined settings and removed confusing options
-- ✅ Fixed critical bugs and improved stability
-- ✅ Added 80 total boss drop mounts with proper categorization
-
----
-
-💖 **Good luck on your mount hunts, and may RNG finally be on your side!** 🐉✨
-
-## 📦 Dependencies
-- No external dependencies required.
-- Compatible with all modern WoW versions.
-
---- 
