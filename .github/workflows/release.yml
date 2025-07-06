@@ -26,5 +26,5 @@ jobs:
           curseforge-id: 1204427
           curseforge-files: build/*.zip
           curseforge-loaders: wow_retail
-          curseforge-game-versions: 11.0.1.7
+          curseforge-game-versions: 110107
           curseforge-changelog: ${{ github.event.release.body }}
