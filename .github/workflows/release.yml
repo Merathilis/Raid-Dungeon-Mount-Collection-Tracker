@@ -10,12 +10,22 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Package and upload addon
-        uses: wagoio/wago-action@v1
+      - name: Zip addon folder
+        run: |
+          mkdir -p build
+          cd RaidMount
+          zip -r ../build/RaidMount.zip .
+          cd ..
+
+      - name: Upload to CurseForge
+        uses: Kir-Antipov/mc-publish@v3
         with:
-          addon-path: 'RaidMount'
-          curseforge-id: '1204427'
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          game-version: 'retail'
+          curseforge-id: 1204427
+          files: build/*.zip
+          game-version: wow_retail
+          changelog: ${{ github.event.release.body }}
+          changelog-type: markdown
+
