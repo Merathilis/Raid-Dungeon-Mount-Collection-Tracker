@@ -147,6 +147,9 @@ local function RecordAttemptWithStatistics(mount, characterID, currentTime)
 
     attemptData.total = (attemptData.total or 0) + 1
     attemptData.characters[characterID] = (attemptData.characters[characterID] or 0) + 1
+    -- Add/update class info for this character
+    attemptData.classes = attemptData.classes or {}
+    attemptData.classes[characterID] = select(2, UnitClass("player")) -- e.g., "DRUID"
     -- Add/update per-character last attempt date in UK format
     attemptData.lastAttemptDates = attemptData.lastAttemptDates or {}
     attemptData.lastAttemptDates[characterID] = date("%d/%m/%y")
@@ -245,17 +248,6 @@ bossKillFrame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
--- Boss kill tracking for mount attempts
-local bossKillFrame = CreateFrame("Frame")
-bossKillFrame:RegisterEvent("ENCOUNTER_END")
-bossKillFrame:SetScript("OnEvent", function(self, event, encounterID, encounterName, difficultyID, raidSize, endStatus)
-    if event == "ENCOUNTER_END" and endStatus == 1 then -- 1 = success/kill
-        if RaidMount.RecordBossAttempt then
-            RaidMount.RecordBossAttempt(encounterName)
-        end
-    end
-end)
-
 function RaidMount.RecordBossAttempt(encounterName)
     for _, mount in ipairs(RaidMount.mountInstances or {}) do
         if mount.bossName and mount.bossName == encounterName then
@@ -271,6 +263,9 @@ function RaidMount.RecordBossAttempt(encounterName)
             local charKey = UnitName("player") .. "-" .. GetRealmName()
             RaidMountAttempts[trackingKey].total = (RaidMountAttempts[trackingKey].total or 0) + 1
             RaidMountAttempts[trackingKey].characters[charKey] = (RaidMountAttempts[trackingKey].characters[charKey] or 0) + 1
+            -- Add/update class info for this character
+            RaidMountAttempts[trackingKey].classes = RaidMountAttempts[trackingKey].classes or {}
+            RaidMountAttempts[trackingKey].classes[charKey] = select(2, UnitClass("player")) -- e.g., "DRUID"
             -- Add/update per-character last attempt date in UK format
             RaidMountAttempts[trackingKey].lastAttemptDates = RaidMountAttempts[trackingKey].lastAttemptDates or {}
             RaidMountAttempts[trackingKey].lastAttemptDates[charKey] = date("%d/%m/%y")

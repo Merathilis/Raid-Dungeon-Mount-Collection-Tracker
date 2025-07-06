@@ -1,6 +1,6 @@
+-- Enhanced tooltip functionality with caching and class colors
 local addonName, RaidMount = ...
 
--- Enhanced tooltip functionality with caching
 RaidMount = RaidMount or {}
 
 -- Tooltip cache for performance optimization
@@ -8,6 +8,106 @@ local tooltipCache = {}
 local cacheSize = 50 -- Maximum cached tooltips
 local cacheHits = 0
 local cacheMisses = 0
+
+-- Class color definitions (fallback if RAID_CLASS_COLORS is not available)
+local CLASS_COLORS = {
+    ["DEATHKNIGHT"] = {0.77, 0.12, 0.23},
+    ["DEMONHUNTER"] = {0.64, 0.19, 0.79},
+    ["DRUID"] = {1.0, 0.49, 0.04},
+    ["EVOKER"] = {0.2, 0.58, 0.5},
+    ["HUNTER"] = {0.67, 0.83, 0.45},
+    ["MAGE"] = {0.41, 0.8, 0.94},
+    ["MONK"] = {0.0, 1.0, 0.59},
+    ["PALADIN"] = {0.96, 0.55, 0.73},
+    ["PRIEST"] = {1.0, 1.0, 1.0},
+    ["ROGUE"] = {1.0, 0.96, 0.41},
+    ["SHAMAN"] = {0.0, 0.44, 0.87},
+    ["WARLOCK"] = {0.58, 0.51, 0.79},
+    ["WARRIOR"] = {0.78, 0.61, 0.43}
+}
+
+-- Function to get class color for a character
+local function GetClassColor(characterName)
+    if not characterName then return 0.7, 1, 0.7 end -- Default light green
+    
+    -- Try to get class info from saved variables or guild roster
+    local classInfo = nil
+    
+    -- Check if we have class data stored (you'll need to implement this storage)
+    if RaidMountCharacterClasses and RaidMountCharacterClasses[characterName] then
+        classInfo = RaidMountCharacterClasses[characterName]
+    else
+        -- Try to get class from current guild roster or group
+        local guildName = GetGuildInfo("player")
+        if guildName then
+            local numMembers = GetNumGuildMembers()
+            for i = 1, numMembers do
+                local name, _, _, _, class = GetGuildRosterInfo(i)
+                if name and name:match("([^%-]+)") == characterName:match("([^%-]+)") then
+                    classInfo = class
+                    break
+                end
+            end
+        end
+    end
+    
+    if classInfo then
+        -- Use WoW's built-in class colors if available
+        local classColors = RAID_CLASS_COLORS and RAID_CLASS_COLORS[classInfo]
+        if classColors then
+            return classColors.r, classColors.g, classColors.b
+        end
+        
+        -- Fall back to our custom class colors
+        local customColors = CLASS_COLORS[classInfo]
+        if customColors then
+            return customColors[1], customColors[2], customColors[3]
+        end
+    end
+    
+    -- Default to light green if no class info found
+    return 0.7, 1, 0.7
+end
+
+-- Function to store character class info when available
+function RaidMount.StoreCharacterClass(characterName, class)
+    if not characterName or not class then return end
+    
+    RaidMountCharacterClasses = RaidMountCharacterClasses or {}
+    RaidMountCharacterClasses[characterName] = class
+end
+
+-- Function to scan and store current group/guild class info
+function RaidMount.ScanAndStoreClassInfo()
+    RaidMountCharacterClasses = RaidMountCharacterClasses or {}
+    
+    -- Scan current group
+    local numGroupMembers = GetNumGroupMembers()
+    if numGroupMembers > 0 then
+        for i = 1, numGroupMembers do
+            local name, _, _, _, class = GetRaidRosterInfo(i)
+            if name and class then
+                local shortName = name:match("([^%-]+)") or name
+                RaidMountCharacterClasses[shortName] = class
+                RaidMountCharacterClasses[name] = class -- Store both versions
+            end
+        end
+    end
+    
+    -- Scan guild roster
+    local guildName = GetGuildInfo("player")
+    if guildName then
+        local numMembers = GetNumGuildMembers()
+        for i = 1, numMembers do
+            local name, _, _, _, class = GetGuildRosterInfo(i)
+            if name and class then
+                local shortName = name:match("([^%-]+)") or name
+                RaidMountCharacterClasses[shortName] = class
+                RaidMountCharacterClasses[name] = class -- Store both versions
+            end
+        end
+    end
+end
 
 -- Generate cache key for a mount
 local function GetTooltipCacheKey(mount, lockoutStatus)
@@ -24,7 +124,7 @@ local function AddToCache(key, tooltipData)
     tooltipCache[key] = tooltipData
 end
 
--- Show tooltip with mount information (optimized with caching)
+-- Show tooltip with mount information (optimized with caching and class colors)
 function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
     if not frame or not mount then
         return
@@ -169,12 +269,14 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
             local maxShow = math.min(8, #characterAttempts)
             for i = 1, maxShow do
                 local char = characterAttempts[i]
-                GameTooltip:AddDoubleLine("  " .. char.name .. ":", tostring(char.count), 0.7, 1, 0.7, 1, 1, 1)
+                -- Get class color for this character
+                local r, g, b = GetClassColor(char.name)
+                GameTooltip:AddDoubleLine("  " .. char.name .. ":", tostring(char.count), r, g, b, 1, 1, 1)
                 table.insert(tooltipData, {
                     type = "double", 
                     left = "  " .. char.name .. ":", 
                     right = tostring(char.count), 
-                    leftColor = {0.7, 1, 0.7}, 
+                    leftColor = {r, g, b}, 
                     rightColor = {1, 1, 1}
                 })
             end
@@ -274,8 +376,6 @@ end
 
 -- Alternative tooltip for mini-display (if needed)
 function RaidMount.ShowMiniTooltip(self, mount)
-
-    
     GameTooltip:Hide()
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:ClearLines()
@@ -300,3 +400,26 @@ function RaidMount.ShowMiniTooltip(self, mount)
 
     GameTooltip:Show()
 end
+
+-- Event handler to automatically scan for class info
+local function OnEvent(self, event, ...)
+    if event == "ADDON_LOADED" and ... == addonName then
+        -- Initialize class data storage
+        RaidMountCharacterClasses = RaidMountCharacterClasses or {}
+        
+        -- Scan for class info when addon loads
+        C_Timer.After(2, function()
+            RaidMount.ScanAndStoreClassInfo()
+        end)
+    elseif event == "GROUP_ROSTER_UPDATE" or event == "GUILD_ROSTER_UPDATE" then
+        -- Update class info when group or guild changes
+        RaidMount.ScanAndStoreClassInfo()
+    end
+end
+
+-- Register events
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+frame:RegisterEvent("GUILD_ROSTER_UPDATE")
+frame:SetScript("OnEvent", OnEvent)

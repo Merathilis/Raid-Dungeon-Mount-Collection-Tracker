@@ -6,6 +6,23 @@ RaidMount = RaidMount or {}
 local COLORS = RaidMount.COLORS
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
+-- Define class colors at the top of the file
+local CLASS_COLORS = {
+    DEATHKNIGHT = "C41F3B",
+    DEMONHUNTER = "A330C9",
+    DRUID       = "FF7D0A",
+    EVOKER      = "33937F",
+    HUNTER      = "ABD473",
+    MAGE        = "69CCF0",
+    MONK        = "00FF96",
+    PALADIN     = "F58CBA",
+    PRIEST      = "FFFFFF",
+    ROGUE       = "FFF569",
+    SHAMAN      = "0070DE",
+    WARLOCK     = "9482C9",
+    WARRIOR     = "C79C6E",
+}
+
 -- Create info panel for mount details
 function RaidMount.CreateInfoPanel(frame)
     if frame.infoPanel then return frame.infoPanel end
@@ -39,20 +56,20 @@ function RaidMount.CreateInfoPanel(frame)
     -- Mount Name (large, prominent but contained)
     local name = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, -2)
-    name:SetFont(cachedFontPath, 22, "OUTLINE") -- Increased font size further
+    name:SetFont(cachedFontPath, 22, "OUTLINE")
     name:SetJustifyH("LEFT")
     name:SetWidth(300)
     infoPanel.name = name
 
     -- Status icon and text - positioned to not overlap
     local statusIcon = infoPanel:CreateTexture(nil, "OVERLAY")
-    statusIcon:SetSize(22, 22) -- Larger status icon
+    statusIcon:SetSize(22, 22)
     statusIcon:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -4)
     infoPanel.statusIcon = statusIcon
     
     local statusText = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     statusText:SetPoint("LEFT", statusIcon, "RIGHT", 6, 0)
-    statusText:SetFont(cachedFontPath, 16, "OUTLINE") -- Increased font size further
+    statusText:SetFont(cachedFontPath, 16, "OUTLINE")
     statusText:SetJustifyH("LEFT")
     statusText:SetWidth(200)
     infoPanel.statusText = statusText
@@ -61,43 +78,43 @@ function RaidMount.CreateInfoPanel(frame)
     -- Column 1: Source Information (Left) - positioned below status, NO HEADER
     local source = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     source:SetPoint("TOPLEFT", statusIcon, "BOTTOMLEFT", 0, -8)
-    source:SetFont(cachedFontPath, 13, "OUTLINE") -- Increased font size further
+    source:SetFont(cachedFontPath, 13, "OUTLINE")
     source:SetJustifyH("LEFT")
     source:SetWidth(180)
     infoPanel.source = source
 
     local boss = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     boss:SetPoint("TOPLEFT", source, "BOTTOMLEFT", 0, -3)
-    boss:SetFont(cachedFontPath, 13, "OUTLINE") -- Increased font size further
+    boss:SetFont(cachedFontPath, 13, "OUTLINE")
     boss:SetJustifyH("LEFT")
     boss:SetWidth(180)
     infoPanel.boss = boss
 
     local location = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     location:SetPoint("TOPLEFT", boss, "BOTTOMLEFT", 0, -3)
-    location:SetFont(cachedFontPath, 13, "OUTLINE") -- Increased font size further
+    location:SetFont(cachedFontPath, 13, "OUTLINE")
     location:SetJustifyH("LEFT")
     location:SetWidth(180)
     infoPanel.location = location
 
     -- Column 2: Attempt Tracking - MOVED UP to align with mount name
     local col2Header = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    col2Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 320, -8) -- Aligned with mount name
-    col2Header:SetFont(cachedFontPath, 14, "OUTLINE") -- Increased font size further
+    col2Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 320, -8)
+    col2Header:SetFont(cachedFontPath, 14, "OUTLINE")
     col2Header:SetText("|cFFFFD700ATTEMPT TRACKING|r")
     col2Header:SetTextColor(1, 0.84, 0, 1)
     infoPanel.col2Header = col2Header
 
     local totalAttempts = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     totalAttempts:SetPoint("TOPLEFT", col2Header, "BOTTOMLEFT", 0, -3)
-    totalAttempts:SetFont(cachedFontPath, 13, "OUTLINE") -- Increased font size further
+    totalAttempts:SetFont(cachedFontPath, 13, "OUTLINE")
     totalAttempts:SetJustifyH("LEFT")
     totalAttempts:SetWidth(180)
     infoPanel.totalAttempts = totalAttempts
 
     local charAttempts1 = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     charAttempts1:SetPoint("TOPLEFT", totalAttempts, "BOTTOMLEFT", 0, -2)
-    charAttempts1:SetFont(cachedFontPath, 12, "OUTLINE") -- Increased font size further
+    charAttempts1:SetFont(cachedFontPath, 12, "OUTLINE")
     charAttempts1:SetJustifyH("LEFT")
     charAttempts1:SetTextColor(0.7, 1, 0.7, 1)
     charAttempts1:SetWidth(180)
@@ -105,7 +122,7 @@ function RaidMount.CreateInfoPanel(frame)
 
     local charAttempts2 = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     charAttempts2:SetPoint("TOPLEFT", charAttempts1, "BOTTOMLEFT", 0, -2)
-    charAttempts2:SetFont(cachedFontPath, 12, "OUTLINE") -- Increased font size further
+    charAttempts2:SetFont(cachedFontPath, 12, "OUTLINE")
     charAttempts2:SetJustifyH("LEFT")
     charAttempts2:SetTextColor(0.7, 1, 0.7, 1)
     charAttempts2:SetWidth(180)
@@ -113,7 +130,7 @@ function RaidMount.CreateInfoPanel(frame)
 
     local charAttempts3 = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     charAttempts3:SetPoint("TOPLEFT", charAttempts2, "BOTTOMLEFT", 0, -2)
-    charAttempts3:SetFont(cachedFontPath, 12, "OUTLINE") -- Increased font size further
+    charAttempts3:SetFont(cachedFontPath, 12, "OUTLINE")
     charAttempts3:SetJustifyH("LEFT")
     charAttempts3:SetTextColor(0.7, 1, 0.7, 1)
     charAttempts3:SetWidth(180)
@@ -121,7 +138,7 @@ function RaidMount.CreateInfoPanel(frame)
 
     local charAttempts4 = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     charAttempts4:SetPoint("TOPLEFT", charAttempts3, "BOTTOMLEFT", 0, -2)
-    charAttempts4:SetFont(cachedFontPath, 12, "OUTLINE") -- Increased font size further
+    charAttempts4:SetFont(cachedFontPath, 12, "OUTLINE")
     charAttempts4:SetJustifyH("LEFT")
     charAttempts4:SetTextColor(0.7, 1, 0.7, 1)
     charAttempts4:SetWidth(180)
@@ -129,30 +146,30 @@ function RaidMount.CreateInfoPanel(frame)
 
     -- Column 3: Status & Lockout - now with lockout timer
     local col3Header = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    col3Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 510, -8) -- Aligned with mount name
-    col3Header:SetFont(cachedFontPath, 14, "OUTLINE") -- Increased font size further
+    col3Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 510, -8)
+    col3Header:SetFont(cachedFontPath, 14, "OUTLINE")
     col3Header:SetText("|cFFFFD700STATUS & LOCKOUT|r")
     col3Header:SetTextColor(1, 0.84, 0, 1)
     infoPanel.col3Header = col3Header
 
     local lockoutStatus = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     lockoutStatus:SetPoint("TOPLEFT", col3Header, "BOTTOMLEFT", 0, -3)
-    lockoutStatus:SetFont(cachedFontPath, 13, "OUTLINE") -- Increased font size further
+    lockoutStatus:SetFont(cachedFontPath, 13, "OUTLINE")
     lockoutStatus:SetJustifyH("LEFT")
     lockoutStatus:SetWidth(160)
     infoPanel.lockoutStatus = lockoutStatus
 
     local lockoutTimer = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     lockoutTimer:SetPoint("TOPLEFT", lockoutStatus, "BOTTOMLEFT", 0, -2)
-    lockoutTimer:SetFont(cachedFontPath, 13, "OUTLINE") -- Replaced lastAttempt with lockoutTimer
+    lockoutTimer:SetFont(cachedFontPath, 13, "OUTLINE")
     lockoutTimer:SetJustifyH("LEFT")
     lockoutTimer:SetWidth(160)
-    lockoutTimer:SetTextColor(1, 0.8, 0.2, 1) -- Orange color for timer
+    lockoutTimer:SetTextColor(1, 0.8, 0.2, 1)
     infoPanel.lockoutTimer = lockoutTimer
 
     local collectionDate = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     collectionDate:SetPoint("TOPLEFT", lockoutTimer, "BOTTOMLEFT", 0, -2)
-    collectionDate:SetFont(cachedFontPath, 13, "OUTLINE") -- Increased font size further
+    collectionDate:SetFont(cachedFontPath, 13, "OUTLINE")
     collectionDate:SetJustifyH("LEFT")
     collectionDate:SetWidth(160)
     collectionDate:SetTextColor(0.6, 1, 0.6, 1)
@@ -160,8 +177,8 @@ function RaidMount.CreateInfoPanel(frame)
 
     -- Column 4: Description - MOVED UP to align with attempt tracking
     local col4Header = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    col4Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 680, -8) -- Aligned with mount name
-    col4Header:SetFont(cachedFontPath, 14, "OUTLINE") -- Increased font size further
+    col4Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 680, -8)
+    col4Header:SetFont(cachedFontPath, 14, "OUTLINE")
     col4Header:SetText("|cFFFFD700DESCRIPTION|r")
     col4Header:SetTextColor(1, 0.84, 0, 1)
     infoPanel.col4Header = col4Header
@@ -169,13 +186,42 @@ function RaidMount.CreateInfoPanel(frame)
     local description = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     description:SetPoint("TOPLEFT", col4Header, "BOTTOMLEFT", 0, 2)
     description:SetPoint("TOPRIGHT", infoPanel, "TOPRIGHT", -10, -18)
-    description:SetFont(cachedFontPath, 14, "OUTLINE") -- Adjusted font size to 14 for balance
+    description:SetFont(cachedFontPath, 14, "OUTLINE")
     description:SetJustifyH("LEFT")
     description:SetTextColor(0.9, 0.9, 0.9, 1)
-    description:SetHeight(90) -- Much larger description area
+    description:SetHeight(90)
     infoPanel.description = description
     
     return infoPanel
+end
+
+-- Helper function to get class color
+local function GetClassColor(class)
+    if not class then return "FFFFFF" end
+    local upperClass = class:upper()
+    return CLASS_COLORS[upperClass] or "FFFFFF"
+end
+
+-- Helper function to ensure class data is stored when tracking attempts
+function RaidMount.StoreClassData(trackingKey, characterName)
+    if not RaidMountAttempts then
+        RaidMountAttempts = {}
+    end
+    
+    if not RaidMountAttempts[trackingKey] then
+        RaidMountAttempts[trackingKey] = {
+            characters = {},
+            lastAttemptDates = {},
+            classes = {}
+        }
+    end
+    
+    -- Store the current character's class
+    local _, class = UnitClass("player")
+    if class then
+        RaidMountAttempts[trackingKey].classes = RaidMountAttempts[trackingKey].classes or {}
+        RaidMountAttempts[trackingKey].classes[characterName] = class
+    end
 end
 
 -- Show info panel with mount data
@@ -261,13 +307,29 @@ function RaidMount.ShowInfoPanel(data)
             if type(count) == "number" and count > 0 then
                 local shortName = charName:match("([^%-]+)") or charName
                 if #shortName > 12 then shortName = shortName:sub(1, 12) end
+                
                 local lastAttemptDate = "Never"
                 if attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] then
                     lastAttemptDate = attemptData.lastAttemptDates[charName]
                 end
+                
+                -- Get class and color the name - FIXED
+                local class = nil
+                if attemptData.classes and attemptData.classes[charName] then
+                    class = attemptData.classes[charName]
+                end
+                
+                -- Debug: Print class data to see what we're getting
+                if RaidMount.debug then
+                    print("Character: " .. charName .. ", Class: " .. tostring(class))
+                end
+                
+                local color = GetClassColor(class)
+                local coloredName = "|cFF" .. color .. shortName .. "|r"
+                
                 table.insert(characterAttempts, {
-                    name = shortName, 
-                    count = count, 
+                    name = coloredName,
+                    count = count,
                     lastAttempt = lastAttemptDate
                 })
             end
@@ -295,69 +357,36 @@ function RaidMount.ShowInfoPanel(data)
     end
     
     -- Column 3: Status & Lockout - now with lockout timer
-    if data.lockoutStatus and data.lockoutStatus ~= "Unknown" then
-        local lockoutColor = data.lockoutStatus == "No lockout" and "|cFF00FF00" or "|cFFFF6666"
-        local lockoutText = data.lockoutStatus
-        if #lockoutText > 18 then lockoutText = lockoutText:sub(1, 15) .. "..." end
-        panel.lockoutStatus:SetText("Lockout: " .. lockoutColor .. lockoutText .. "|r")
-    else
-        panel.lockoutStatus:SetText("Lockout: |cFFCCCCCCUnknown|r")
-    end
-    
-    -- Lockout Timer - Use the actual lockout data from the game API
-    local lockoutTimerText = "Available Now"
+    local isLockedOut = false
+    local lockoutTimerText = "Available now"
     local lockoutColor = "|cFF00FF00" -- Green for available
-    
+
     -- First, check if we have actual lockout data from the game API
     if data.lockoutStatus and data.lockoutStatus ~= "Unknown" and data.lockoutStatus ~= "No lockout" then
         -- If there's a lockout, use the same time as the lockout status
         lockoutTimerText = data.lockoutStatus
         lockoutColor = "|cFFFF6666" -- Red for locked out
+        isLockedOut = true
     else
         -- Fallback to addon tracking if no game API lockout data
         local trackingKey = data.spellID or data.mountID
         local attemptData = RaidMountAttempts and RaidMountAttempts[trackingKey]
         local currentCharacter = UnitName("player") .. "-" .. GetRealmName()
-        
         if attemptData and attemptData.lastAttemptDates and attemptData.lastAttemptDates[currentCharacter] then
             local lastAttemptDate = attemptData.lastAttemptDates[currentCharacter]
-            
             -- Parse the date (assuming format is dd/mm/yy)
             if lastAttemptDate and lastAttemptDate ~= "Never" then
                 local day, month, year = lastAttemptDate:match("(%d+)/(%d+)/(%d+)")
                 if day and month and year then
-                    -- Convert to full year
                     year = tonumber(year)
-                    if year < 50 then
-                        year = year + 2000
-                    else
-                        year = year + 1900
-                    end
-                    
-                    -- Calculate next reset (weekly reset is Tuesday)
+                    if year < 50 then year = year + 2000 else year = year + 1900 end
                     local lastAttemptTime = time({year = year, month = tonumber(month), day = tonumber(day), hour = 0, min = 0, sec = 0})
                     local currentTime = time()
-                    
-                    -- Find next Tuesday reset
                     local currentDate = date("*t", currentTime)
-                    local daysUntilTuesday = (3 - currentDate.wday + 7) % 7 -- Tuesday is day 3
-                    if daysUntilTuesday == 0 and currentDate.hour < 9 then -- Reset is at 9 AM
-                        daysUntilTuesday = 0
-                    elseif daysUntilTuesday == 0 then
-                        daysUntilTuesday = 7
-                    end
-                    
-                    local nextResetTime = time({
-                        year = currentDate.year,
-                        month = currentDate.month,
-                        day = currentDate.day + daysUntilTuesday,
-                        hour = 9,
-                        min = 0,
-                        sec = 0
-                    })
-                    
-                    -- Check if last attempt was after the most recent reset
-                    local lastResetTime = nextResetTime - (7 * 24 * 60 * 60) -- Previous Tuesday
+                    local daysUntilTuesday = (3 - currentDate.wday + 7) % 7
+                    if daysUntilTuesday == 0 and currentDate.hour < 9 then daysUntilTuesday = 0 elseif daysUntilTuesday == 0 then daysUntilTuesday = 7 end
+                    local nextResetTime = time({year = currentDate.year, month = currentDate.month, day = currentDate.day + daysUntilTuesday, hour = 9, min = 0, sec = 0})
+                    local lastResetTime = nextResetTime - (7 * 24 * 60 * 60)
                     if lastAttemptTime > lastResetTime then
                         -- Character is locked out
                         local timeUntilReset = nextResetTime - currentTime
@@ -365,7 +394,6 @@ function RaidMount.ShowInfoPanel(data)
                             local days = math.floor(timeUntilReset / (24 * 60 * 60))
                             local hours = math.floor((timeUntilReset % (24 * 60 * 60)) / (60 * 60))
                             local minutes = math.floor((timeUntilReset % (60 * 60)) / 60)
-                            
                             if days > 0 then
                                 lockoutTimerText = string.format("%dd %dh %dm", days, hours, minutes)
                             elseif hours > 0 then
@@ -374,14 +402,21 @@ function RaidMount.ShowInfoPanel(data)
                                 lockoutTimerText = string.format("%dm", minutes)
                             end
                             lockoutColor = "|cFFFF6666" -- Red for locked out
+                            isLockedOut = true
                         end
                     end
                 end
             end
         end
     end
-    
-    panel.lockoutTimer:SetText("Next Attempt: " .. lockoutColor .. lockoutTimerText .. "|r")
+
+    if isLockedOut then
+        panel.lockoutStatus:SetText("Lockout: |cFFFF6666Locked out|r")
+        panel.lockoutTimer:SetText("Next Attempt: " .. lockoutColor .. lockoutTimerText .. "|r")
+    else
+        panel.lockoutStatus:SetText("Lockout: |cFF00FF00No lockout|r")
+        panel.lockoutTimer:SetText("Next Attempt: |cFF00FF00Available now|r")
+    end
     
     if data.collected then
         local collectionText = data.collectionDate or "Unknown Date"
@@ -430,4 +465,4 @@ function RaidMount.UpdateInfoPanelPosition()
     RaidMount.ScrollFrame:ClearAllPoints()
     RaidMount.ScrollFrame:SetPoint("TOPLEFT", 15, -165)
     RaidMount.ScrollFrame:SetPoint("BOTTOMRIGHT", -35, 160)
-end 
+end

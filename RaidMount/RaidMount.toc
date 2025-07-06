@@ -2,7 +2,7 @@
 ## Notes: Tracks raid and dungeon mount attempts, collections, and lockouts with modernized UI and enhanced features.
 ## Interface: 110100, 110105, 110107
 ## Author: knutballs @EU Ravencrest
-## Version: 04.07.25.04
+## Version: 06.07.25.11
 ## SavedVariables: RaidMountAttempts, RaidMountSettings, RaidMountSaved
 
 ## X-Category: Boss Encounters
@@ -14,6 +14,9 @@ LockoutCheck.lua
 RaidMount.lua
 RaidMountTooltip.lua
 UI/RaidMountUI_Utils.lua
+UI/RaidMountUI_Stats.lua
+UI/RaidMountUI_Debug.lua
+UI/RaidMountUI_Filters.lua
 UI/RaidMountUI_Main.lua
 UI/RaidMountUI_MountList.lua
 UI/RaidMountUI_InfoPanel.lua
