@@ -274,7 +274,7 @@ end
 
 -- Alternative tooltip for mini-display (if needed)
 function RaidMount.ShowMiniTooltip(self, mount)
-    if not RaidMountSettings.showTooltips then return end
+
     
     GameTooltip:Hide()
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")

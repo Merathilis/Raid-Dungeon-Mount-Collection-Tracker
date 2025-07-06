@@ -5,41 +5,23 @@ local RAIDMOUNT_PREFIX = "|cFF33CCFFRaid|r|cFFFF0000Mount|r"
 
 -- Helper function for consistent addon messages
 local function PrintAddonMessage(message, isError)
-    local prefix = isError and "|cFFFF0000RaidMount Error:|r" or "|cFF33CCFFRaidMount:|r"
-    print(RAIDMOUNT_PREFIX .. " " .. message)
+    -- Removed for production
 end
-
-
-RaidMountSettings = RaidMountSettings or {
-    showTooltips = true,
-    soundOnDrop = true,
-    compactMode = false,
-
-    filterDefault = "Uncollected",
-    hasScannedCollection = false,
-    debugPerformance = false,
-    uiScale = 1.0
-}
 
 
 RaidMountAttempts = RaidMountAttempts or {}
 
-
-local ADDON_VERSION = "24.06.27.03"
-if not RaidMountSettings.version or RaidMountSettings.version ~= ADDON_VERSION then
-    RaidMountSettings.version = ADDON_VERSION
-    PrintAddonMessage("Updated to version " .. ADDON_VERSION)
-end
+local ADDON_VERSION = "04.07.25.04"
+PrintAddonMessage("Updated to version " .. ADDON_VERSION)
 
 -- Ensure mountInstances is loaded
 if not RaidMount.mountInstances then
-    print(RAIDMOUNT_PREFIX .. " Error:|r mountInstances is nil! Ensure MountData.lua is loaded.")
-    RaidMount.mountInstances = {}
+    -- Removed for production
 end
 
 -- Ensure required functions exist
 if not RaidMount.PlayerHasMount or not RaidMount.GetRaidLockout then
-    print(RAIDMOUNT_PREFIX .. " Error:|r Required functions missing! Ensure MountCheck.lua and LockoutCheck.lua are loaded.")
+    -- Removed for production
     return
 end
 
@@ -47,15 +29,8 @@ local mountInstances = RaidMount.mountInstances
 
 -- Scan existing mount collection (for fresh installs)
 local function ScanExistingMountCollection()
-    if RaidMountSettings.hasScannedCollection then
-        return
-    end
-    
     PrintAddonMessage("Scanning your mount collection for the first time...")
-    
     RaidMount.RefreshMountCollection()
-    
-    RaidMountSettings.hasScannedCollection = true
 end
 
 
@@ -68,12 +43,15 @@ local function GetCachedPlayerInfo()
 end
 
 local function InitializeAddon()
-    ScanExistingMountCollection()
-    
-    if not RaidMountSettings.seenWelcome then
-        RaidMountSettings.seenWelcome = true
-        print(RAIDMOUNT_PREFIX .. " v" .. ADDON_VERSION .. " loaded! Use |cFFFFFF00/rm|r to open the mount tracker.")
+    -- Initialize tooltip setting from SavedVariable
+    if not RaidMountSaved then RaidMountSaved = {} end
+    if RaidMountSaved.enhancedTooltip == nil then
+        RaidMountSaved.enhancedTooltip = true
     end
+    RaidMountTooltipEnabled = RaidMountSaved.enhancedTooltip
+    
+    ScanExistingMountCollection()
+    PrintAddonMessage("v" .. ADDON_VERSION .. " loaded! Use |cFFFFFF00/rm|r to open the mount tracker.")
 end
 
 
@@ -89,35 +67,25 @@ end
 
 
 local function InitializeFromStatistics()
-    if not RaidMountSettings.statisticsInitialized then
-
-        
-        local initializedCount = 0
-        for _, mount in ipairs(mountInstances) do
-            local attemptData = RaidMountAttempts[mount.spellID]
-            if attemptData and mount.statisticIds and not attemptData.statisticsInitialized then
-                local maxAttempts = 0
-                
-                for _, statId in ipairs(mount.statisticIds) do
-                    local statValue = GetStatisticValue(statId)
-                    if statValue > maxAttempts then
-                        maxAttempts = statValue
-                    end
-                end
-                
-                if maxAttempts > (attemptData.total or 0) then
-                    attemptData.total = maxAttempts
-                    attemptData.statisticsInitialized = true
-                    initializedCount = initializedCount + 1
+    local initializedCount = 0
+    for _, mount in ipairs(mountInstances) do
+        local attemptData = RaidMountAttempts[mount.spellID]
+        if attemptData and mount.statisticIds and not attemptData.statisticsInitialized then
+            local maxAttempts = 0
+            
+            for _, statId in ipairs(mount.statisticIds) do
+                local statValue = GetStatisticValue(statId)
+                if statValue > maxAttempts then
+                    maxAttempts = statValue
                 end
             end
+            
+            if maxAttempts > (attemptData.total or 0) then
+                attemptData.total = maxAttempts
+                attemptData.statisticsInitialized = true
+                initializedCount = initializedCount + 1
+            end
         end
-        
-        if initializedCount > 0 then
-    
-        end
-        
-        RaidMountSettings.statisticsInitialized = true
     end
 end
 
@@ -174,13 +142,14 @@ local function RecordAttemptWithStatistics(mount, characterID, currentTime)
     local hasMount = RaidMount.PlayerHasMount(mount.MountID, mount.itemID, mount.spellID)
     if hasMount and not attemptData.collected then
         attemptData.collected = true
-        if RaidMountSettings.soundOnDrop then
-            PlaySound(8959, "Master")
-        end
+        PlaySound(8959, "Master")
     end
 
     attemptData.total = (attemptData.total or 0) + 1
     attemptData.characters[characterID] = (attemptData.characters[characterID] or 0) + 1
+    -- Add/update per-character last attempt date in UK format
+    attemptData.lastAttemptDates = attemptData.lastAttemptDates or {}
+    attemptData.lastAttemptDates[characterID] = date("%d/%m/%y")
     attemptData.lastAttempt = currentTime
     
     if mount.statisticIds then
@@ -237,13 +206,7 @@ bossKillFrame:RegisterEvent("NEW_MOUNT_ADDED")
 bossKillFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "NEW_MOUNT_ADDED" then
         C_Timer.After(0.5, function()
-            print(RAIDMOUNT_PREFIX .. ":|r New mount detected! Refreshing collection status...")
-            RaidMount.ClearMountCache()
-            RaidMount.RefreshMountCollection()
-            -- Invalidate static cache since mount collection changed
-            if RaidMount.InvalidateStaticData then
-                RaidMount.InvalidateStaticData()
-            end
+            -- Removed for production
         end)
         return
     end
@@ -281,6 +244,41 @@ bossKillFrame:SetScript("OnEvent", function(self, event, ...)
         end
     end
 end)
+
+-- Boss kill tracking for mount attempts
+local bossKillFrame = CreateFrame("Frame")
+bossKillFrame:RegisterEvent("ENCOUNTER_END")
+bossKillFrame:SetScript("OnEvent", function(self, event, encounterID, encounterName, difficultyID, raidSize, endStatus)
+    if event == "ENCOUNTER_END" and endStatus == 1 then -- 1 = success/kill
+        if RaidMount.RecordBossAttempt then
+            RaidMount.RecordBossAttempt(encounterName)
+        end
+    end
+end)
+
+function RaidMount.RecordBossAttempt(encounterName)
+    for _, mount in ipairs(RaidMount.mountInstances or {}) do
+        if mount.bossName and mount.bossName == encounterName then
+            local trackingKey = mount.spellID
+            if not RaidMountAttempts[trackingKey] then
+                RaidMountAttempts[trackingKey] = {
+                    total = 0,
+                    characters = {},
+                    lastAttempt = nil,
+                    collected = false
+                }
+            end
+            local charKey = UnitName("player") .. "-" .. GetRealmName()
+            RaidMountAttempts[trackingKey].total = (RaidMountAttempts[trackingKey].total or 0) + 1
+            RaidMountAttempts[trackingKey].characters[charKey] = (RaidMountAttempts[trackingKey].characters[charKey] or 0) + 1
+            -- Add/update per-character last attempt date in UK format
+            RaidMountAttempts[trackingKey].lastAttemptDates = RaidMountAttempts[trackingKey].lastAttemptDates or {}
+            RaidMountAttempts[trackingKey].lastAttemptDates[charKey] = date("%d/%m/%y")
+            RaidMountAttempts[trackingKey].lastAttempt = time()
+            if RaidMount.PopulateUI then RaidMount.PopulateUI() end
+        end
+    end
+end
 
 -- Get Attempt Count (with backward compatibility)
 function RaidMount.GetAttempts(mount)
@@ -332,7 +330,7 @@ function RaidMount.ResetAttempts(mount)
             lastAttempt = nil,
             collected = false
         }
-        print(RAIDMOUNT_PREFIX .. ":|r Attempts for mount ID " .. trackingKey .. " have been reset.")
+        -- Removed for production
     else
         -- Reset all attempts
         for id, _ in pairs(RaidMountAttempts) do
@@ -343,7 +341,7 @@ function RaidMount.ResetAttempts(mount)
                 collected = false
             }
         end
-        print(RAIDMOUNT_PREFIX .. ":|r All attempts have been reset.")
+        -- Removed for production
     end
     
     -- Invalidate static cache since attempt data changed
@@ -383,7 +381,7 @@ function RaidMount.GetFormattedMountData()
         if attemptData and type(attemptData) == "table" then
             hasMount = attemptData.collected or false
             if attemptData.lastAttempt then
-                lastAttempt = date("%m/%d/%y", attemptData.lastAttempt)
+                lastAttempt = date("%d/%m/%y", attemptData.lastAttempt)
             end
         end
         
@@ -396,13 +394,15 @@ function RaidMount.GetFormattedMountData()
             end
         end
         
+        local lockoutInfo = RaidMount.GetRaidLockout(mount.raidName)
         table.insert(formattedData, {
             raidName = mount.raidName or "Unknown",
             bossName = mount.bossName or "Unknown",
             mountName = mount.mountName or "Unknown",
             location = mount.location or "Unknown",
             dropRate = mount.dropRate or "~1%",
-            resetTime = RaidMount.GetRaidLockout(mount.raidName),
+            resetTime = lockoutInfo,
+            lockoutStatus = lockoutInfo,
             difficulty = mount.difficulty or "Unknown",
             expansion = mount.expansion or "Unknown",
             collected = hasMount,
@@ -417,14 +417,7 @@ function RaidMount.GetFormattedMountData()
     return formattedData
 end
 
--- Settings functions
-function RaidMount.GetSetting(key)
-    return RaidMountSettings[key]
-end
 
-function RaidMount.SetSetting(key, value)
-    RaidMountSettings[key] = value
-end
 
 -- Slash command handler
 SLASH_RAIDMOUNT1 = "/rm"
@@ -523,7 +516,7 @@ function RaidMount.ShowDropMountWindow(dropMounts)
     -- Show the window
     RaidMount.DropMountFrame:Show()
     
-    print(RAIDMOUNT_PREFIX .. ":|r Found " .. #dropMounts .. " boss drop mounts. Window opened for easy copying!")
+    -- Removed for production
 end
 
 -- Removed PrintHelp function - all functionality moved to settings UI
