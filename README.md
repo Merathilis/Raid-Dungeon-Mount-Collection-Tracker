@@ -140,14 +140,8 @@ The addon automatically saves your data in three variables:
 
 ---
 
-##  Troubleshooting
 
 
-### Data Reset
-If you need to reset your data:
-1. Type `/rm reset` in-game
-2. Confirm the reset when prompted
-3. Your attempt data will be cleared but mount collection data will remain
 
 ---
 
@@ -155,10 +149,9 @@ If you need to reset your data:
 
 ### Reporting Issues
 When reporting issues, please include:
-- Your WoW version and interface number
 - The RaidMount version you're using
 - Steps to reproduce the issue
-- Any error messages from the chat
+- Any error messages
 
 ### Feature Requests
 We welcome feature requests! Please:
@@ -168,7 +161,22 @@ We welcome feature requests! Please:
 
 
 
-**Happy mount hunting! 🐴✨**
+---
+### ⚔️ Support the Quest!
+---
+
+🍵 **Support the Developer**
+
+If you enjoy this addon, consider supporting it:
+
+- [Buy me a coffee](https://buymeacoffee.com/j0s0r)
+- [Donate via PayPal](https://www.paypal.com/paypalme/johnfdavison)
+
+Your support helps keep the code flowing and the bugs away. 🧙‍♂️✨
+
+---
+
+
 
 ---
 
