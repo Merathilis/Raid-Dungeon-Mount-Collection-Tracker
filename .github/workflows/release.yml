@@ -28,4 +28,3 @@ jobs:
           game-version: wow_retail
           changelog: ${{ github.event.release.body }}
           changelog-type: markdown
-
