@@ -19,12 +19,13 @@ jobs:
           zip -r ../build/RaidMount.zip .
           cd ..
 
-      - name: Upload to CurseForge
-        uses: Kir-Antipov/mc-publish@v3
-        with:
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          curseforge-id: 1204427
-          files: build/*.zip
-          game-version: wow_retail
-          changelog: ${{ github.event.release.body }}
-          changelog-type: markdown
+   - name: Upload to CurseForge
+  uses: Kir-Antipov/mc-publish@v3
+  with:
+    curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+    curseforge-id: 1204427
+    curseforge-files: build/*.zip
+    curseforge-loaders: wow_retail
+    curseforge-game-versions: 11.0.1.7
+    curseforge-changelog: ${{ github.event.release.body }}
+
