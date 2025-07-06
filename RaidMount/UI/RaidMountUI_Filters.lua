@@ -75,7 +75,7 @@ function RaidMount.CreateFilterDropdowns()
     local collectedDropdown = CreateFrame("Frame", "RaidMountCollectedDropdown", frame, "UIDropDownMenuTemplate")
     collectedDropdown:SetPoint("TOPLEFT", 300, -65)
     UIDropDownMenu_Initialize(collectedDropdown, function()
-        local options = {"All", "Collected", "Uncollected"}
+        local options = {"All", "Collected", "Uncollected", "Collector's Bounty"}
         for _, option in ipairs(options) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = option
@@ -147,6 +147,10 @@ function RaidMount.FilterAndSortMountData(mountData)
             end
         elseif RaidMount.currentFilter == "Uncollected" then
             if mount.collected then
+                includeMount = false
+            end
+        elseif RaidMount.currentFilter == "Collector's Bounty" then
+            if not mount.collectorsBounty then
                 includeMount = false
             end
         end

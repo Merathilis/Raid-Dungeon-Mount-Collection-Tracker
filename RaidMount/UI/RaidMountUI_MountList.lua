@@ -299,6 +299,15 @@ function RaidMount.UpdateRowContent(row, data)
                     nameColor = "|cFF0099BF" -- Dimmed heirloom
                 end
             end
+            
+            -- Add golden glow effect for Collector's Bounty mounts
+            if data.collectorsBounty then
+                if data.collected then
+                    nameColor = "|cFFFFE0A0" -- Bright golden for collected Collector's Bounty mounts
+                else
+                    nameColor = "|cFFD4AF37" -- Darker golden for uncollected Collector's Bounty mounts
+                end
+            end
         end
     end
     

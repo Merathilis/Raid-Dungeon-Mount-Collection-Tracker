@@ -167,8 +167,16 @@ function RaidMount.CreateInfoPanel(frame)
     lockoutTimer:SetTextColor(1, 0.8, 0.2, 1)
     infoPanel.lockoutTimer = lockoutTimer
 
+    -- Add Collector's Bounty text element in the Status section
+    local bountyText = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    bountyText:SetPoint("TOPLEFT", lockoutTimer, "BOTTOMLEFT", 0, -2)
+    bountyText:SetFont(cachedFontPath, 16, "OUTLINE")
+    bountyText:SetJustifyH("LEFT")
+    bountyText:SetWidth(160)
+    infoPanel.bountyText = bountyText
+
     local collectionDate = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    collectionDate:SetPoint("TOPLEFT", lockoutTimer, "BOTTOMLEFT", 0, -2)
+    collectionDate:SetPoint("TOPLEFT", bountyText, "BOTTOMLEFT", 0, -2)
     collectionDate:SetFont(cachedFontPath, 13, "OUTLINE")
     collectionDate:SetJustifyH("LEFT")
     collectionDate:SetWidth(160)
@@ -254,6 +262,11 @@ function RaidMount.ShowInfoPanel(data)
                 nameColor = data.collected and "|cFFA335EE" or "|cFF7F26BB" -- Purple
             elseif quality == 5 then
                 nameColor = data.collected and "|cFFFF8000" or "|cFFBF6000" -- Orange
+            end
+            
+            -- Override color for Collector's Bounty mounts
+            if data.collectorsBounty then
+                nameColor = data.collected and "|cFFFFE0A0" or "|cFFD4AF37" -- Golden colors for Collector's Bounty mounts
             end
         end
     end
@@ -416,6 +429,19 @@ function RaidMount.ShowInfoPanel(data)
     else
         panel.lockoutStatus:SetText("Lockout: |cFF00FF00No lockout|r")
         panel.lockoutTimer:SetText("Next Attempt: |cFF00FF00Available now|r")
+    end
+    
+    -- Add Collector's Bounty information in the Status section
+    if data.collectorsBounty then
+        local bountyText
+        if data.collectorsBounty == true then
+            bountyText = "|cFFFFD700Collector's Bounty:|r |cFF00FF00+5% drop chance|r"
+        else
+            bountyText = "|cFFFFD700Collector's Bounty:|r |cFFFFFF00" .. data.collectorsBounty .. "|r"
+        end
+        panel.bountyText:SetText(bountyText)
+    else
+        panel.bountyText:SetText("")
     end
     
     if data.collected then

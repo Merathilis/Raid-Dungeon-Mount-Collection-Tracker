@@ -146,7 +146,8 @@ function RaidMount.GetCombinedMountData()
             spellID = mount.spellID,
             itemID = mount.itemID,
             contentType = mount.contentType or "Raid",
-            type = mount.contentType or "Raid"
+            type = mount.contentType or "Raid",
+            collectorsBounty = mount.collectorsBounty
         })
     end
     

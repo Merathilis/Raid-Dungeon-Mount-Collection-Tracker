@@ -161,7 +161,12 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
     GameTooltip:ClearLines()
     
     -- Mount name (colored by collection status)
-    local nameColor = mount.collected and "|cFF00FF00" or "|cFFFF0000"
+    local nameColor
+    if mount.collectorsBounty then
+        nameColor = mount.collected and "|cFFFFE0A0" or "|cFFD4AF37" -- Golden colors for Collector's Bounty mounts
+    else
+        nameColor = mount.collected and "|cFF00FF00" or "|cFFFF0000" -- Standard colors
+    end
     local nameText = nameColor .. (mount.mountName or "Unknown Mount") .. "|r"
     GameTooltip:AddLine(nameText, 1, 1, 1)
     table.insert(tooltipData, {type = "text", text = nameText, color = {1, 1, 1}})
@@ -230,6 +235,18 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
         local dropText = "|cFFFFFF00Drop Rate:|r " .. mount.dropRate
         GameTooltip:AddLine(dropText, 1, 1, 1)
         table.insert(tooltipData, {type = "text", text = dropText, color = {1, 1, 1}})
+        
+        -- Add Collector's Bounty information if present
+        if mount.collectorsBounty then
+            local bountyText
+            if mount.collectorsBounty == true then
+                bountyText = "|cFF00FF00Collector's Bounty:|r +5% drop chance"
+            else
+                bountyText = "|cFFFFFF00Collector's Bounty:|r " .. mount.collectorsBounty
+            end
+            GameTooltip:AddLine(bountyText, 1, 1, 1)
+            table.insert(tooltipData, {type = "text", text = bountyText, color = {1, 1, 1}})
+        end
     end
     
     local attempts = mount.attempts or 0
