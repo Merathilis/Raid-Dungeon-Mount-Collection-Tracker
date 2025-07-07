@@ -284,7 +284,7 @@ function RaidMount.CreateButtons()
     -- Version text
     local versionText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     versionText:SetPoint("BOTTOMLEFT", 10, 10)
-    versionText:SetText("|cFF666666Version: 06.07.25.11|r")
+    versionText:SetText("|cFF666666Version: 07.07.25.15|r")
     versionText:SetTextColor(0.4, 0.4, 0.4, 1)
     
     -- Enhanced tooltips checkbox

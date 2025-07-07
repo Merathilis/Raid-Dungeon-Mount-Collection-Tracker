@@ -11,7 +11,7 @@ end
 
 RaidMountAttempts = RaidMountAttempts or {}
 
-local ADDON_VERSION = "04.07.25.04"
+local ADDON_VERSION = "07.07.25.15"
 PrintAddonMessage("Updated to version " .. ADDON_VERSION)
 
 -- Ensure mountInstances is loaded
