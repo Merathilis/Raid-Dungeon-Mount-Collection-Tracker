@@ -28,6 +28,6 @@ jobs:
             build/RaidMount.zip
           curseforge-changelog: ${{ github.event.release.body }}
           curseforge-game-versions: |
-            - 110107
+            - 11.1.7
           curseforge-loaders: |
             - wow_retail
