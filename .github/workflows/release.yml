@@ -24,9 +24,10 @@ jobs:
         with:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           curseforge-id: 1204427
-          curseforge-files: build/*.zip
-          curseforge-loaders: |
-            - wow_retail
+          curseforge-files: |
+            build/RaidMount.zip
+          curseforge-changelog: ${{ github.event.release.body }}
           curseforge-game-versions: |
             - 110107
-          curseforge-changelog: ${{ github.event.release.body }}
+          curseforge-loaders: |
+            - wow_retail
