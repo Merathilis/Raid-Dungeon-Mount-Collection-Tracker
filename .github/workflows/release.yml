@@ -25,10 +25,11 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           curseforge-id: 1204427
           curseforge-files: |
-            build/*.zip
+            build/RaidMount.zip
           curseforge-loaders: |
             - wow_retail
           curseforge-game-versions: |
-            - 110107
+            - 11200  # Placeholder for 11.2.0
+            - 11107  # Placeholder for 11.1.7
           curseforge-changelog: ${{ github.event.release.body }}
           curseforge-game-version-filter: any
