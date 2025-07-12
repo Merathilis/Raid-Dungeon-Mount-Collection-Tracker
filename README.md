@@ -4,7 +4,7 @@
 
 **RaidMount** is a comprehensive World of Warcraft addon that tracks your attempts at obtaining rare mounts from raids, dungeons, world bosses, and special events. Built with performance and accuracy in mind, it provides detailed statistics, real-time tracking, and a professional user interface to help you manage your mount collection journey.
 
-**Current Version:** 06.07.25.11  
+**Current Version:** 12.07.25.21  
 **Interface Support:** 110107  
 **Author:** knutballs @EU Ravencrest
 
