@@ -192,19 +192,53 @@ function RaidMount.UpdateRowContent(row, data)
     row.icon:SetPoint("LEFT", row, "LEFT", columns[1].pos, 0)
     
     local iconTexture = "Interface\\Icons\\INV_Misc_QuestionMark"
+    
+    -- Try multiple approaches to get the mount icon
     if data.mountID and C_MountJournal then
         local _, _, iconFile = C_MountJournal.GetMountInfoByID(data.mountID)
-        if iconFile then iconTexture = iconFile end
+        if iconFile then 
+            iconTexture = iconFile
+        else
+            -- Try using spellID as fallback
+            if data.spellID then
+                local mountIDs = C_MountJournal.GetMountIDs()
+                if mountIDs then
+                    for _, mountID in ipairs(mountIDs) do
+                        local name, spellID, icon, isActive, isUsable, sourceType, isFavorite, isFactionSpecific, faction, shouldHideOnChar, isCollected = C_MountJournal.GetMountInfoByID(mountID)
+                        if spellID == data.spellID and icon then
+                            iconTexture = icon
+                            break
+                        end
+                    end
+                end
+            end
+        end
     end
     row.icon:SetTexture(iconTexture)
     
     local nameColor = "|cFFFFFFFF"
+    local mountName, spellID, iconFile, isActive, isUsable, sourceType, isFavorite, isFactionSpecific, faction, shouldHideOnChar, isCollected, mountID
+    
+    -- Try to get mount info with fallback
     if data.mountID and C_MountJournal then
-        local mountName, spellID, iconFile, isActive, isUsable, sourceType, isFavorite, isFactionSpecific, faction, shouldHideOnChar, isCollected, mountID = C_MountJournal.GetMountInfoByID(data.mountID)
+        mountName, spellID, iconFile, isActive, isUsable, sourceType, isFavorite, isFactionSpecific, faction, shouldHideOnChar, isCollected, mountID = C_MountJournal.GetMountInfoByID(data.mountID)
+        
+        -- If direct lookup failed, try spellID fallback
+        if not mountName and data.spellID then
+            local mountIDs = C_MountJournal.GetMountIDs()
+            if mountIDs then
+                for _, journalMountID in ipairs(mountIDs) do
+                    local name, journalSpellID, icon, isActive, isUsable, journalSourceType, isFavorite, isFactionSpecific, faction, shouldHideOnChar, isCollected = C_MountJournal.GetMountInfoByID(journalMountID)
+                    if journalSpellID == data.spellID then
+                        mountName = name
+                        sourceType = journalSourceType
+                        break
+                    end
+                end
+            end
+        end
         
         if mountName then
-            local creatureDisplayID, description, source, isSelfMount, mountTypeID, uiModelSceneID = C_MountJournal.GetMountInfoExtraByID(data.mountID)
-            
             local quality = 4
             if sourceType then
                 if sourceType == 1 then -- Drop

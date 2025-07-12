@@ -9,10 +9,8 @@ end
 
 RaidMountAttempts = RaidMountAttempts or {}
 
-local ADDON_VERSION = "12.07.25.21"
+local ADDON_VERSION = "12.07.25.25"
 PrintAddonMessage("Updated to version " .. ADDON_VERSION)
-
-local mountInstances = RaidMount.mountInstances
 
 local function ScanExistingMountCollection()
     PrintAddonMessage(RaidMount.L("SCANNING_FIRST_TIME"))
@@ -26,6 +24,37 @@ local function GetCachedPlayerInfo()
         cachedPlayerInfo = UnitName("player") .. "-" .. GetRealmName()
     end
     return cachedPlayerInfo
+end
+
+-- Session tracking
+local currentSessionID = 1
+local lastSessionTime = 0
+local SESSION_TIMEOUT = 3600 -- 1 hour timeout for new session
+
+-- Initialize session tracking
+local function InitializeSessionTracking()
+    if not RaidMountSaved then
+        RaidMountSaved = {}
+    end
+    if not RaidMountSaved.currentSessionID then
+        RaidMountSaved.currentSessionID = 1
+    end
+    if not RaidMountSaved.lastSessionTime then
+        RaidMountSaved.lastSessionTime = 0
+    end
+    currentSessionID = RaidMountSaved.currentSessionID
+    lastSessionTime = RaidMountSaved.lastSessionTime
+end
+
+-- Check if we need a new session
+local function CheckNewSession()
+    local currentTime = time()
+    if currentTime - lastSessionTime > SESSION_TIMEOUT then
+        currentSessionID = currentSessionID + 1
+        lastSessionTime = currentTime
+        RaidMountSaved.currentSessionID = currentSessionID
+        RaidMountSaved.lastSessionTime = lastSessionTime
+    end
 end
 
 local function InitializeAddon()
@@ -45,6 +74,9 @@ local function InitializeAddon()
     end
     RaidMountTooltipEnabled = RaidMountSaved.enhancedTooltip
     
+    -- Initialize session tracking
+    InitializeSessionTracking()
+    
     ScanExistingMountCollection()
     PrintAddonMessage(RaidMount.L("LOADED_MESSAGE", ADDON_VERSION))
 end
@@ -63,7 +95,7 @@ end
 
 local function InitializeFromStatistics()
     local initializedCount = 0
-    for _, mount in ipairs(mountInstances) do
+    for _, mount in ipairs(RaidMount.mountInstances or {}) do
         local attemptData = RaidMountAttempts[mount.spellID]
         local statisticsToCheck = mount.statisticIds
         
@@ -100,7 +132,7 @@ function RaidMount.VerifyStatistics()
     local correctedCount = 0
     local corrections = {}
     
-    for _, mount in ipairs(mountInstances) do
+    for _, mount in ipairs(RaidMount.mountInstances or {}) do
         local attemptData = RaidMountAttempts[mount.spellID]
         local statisticsToCheck = mount.statisticIds
         
@@ -266,7 +298,7 @@ bossKillFrame:SetScript("OnEvent", function(self, event, ...)
     elseif difficultyID == 16 then difficultyName = "Mythic"
     end
 
-    for _, mount in ipairs(mountInstances) do
+    for _, mount in ipairs(RaidMount.mountInstances or {}) do
         local bossToMatch = mount.bossName
         
         -- Check if this mount has difficulty-specific boss names
@@ -289,6 +321,13 @@ bossKillFrame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
+-- Get current session ID
+function RaidMount.GetCurrentSessionID()
+    CheckNewSession()
+    return currentSessionID
+end
+
+-- Record Attempt (Enhanced with session tracking)
 function RaidMount.RecordBossAttempt(encounterName, difficultyName)
     -- Get current difficulty if not provided
     if not difficultyName then
@@ -300,6 +339,9 @@ function RaidMount.RecordBossAttempt(encounterName, difficultyName)
         elseif difficultyID == 16 then difficultyName = "Mythic"
         end
     end
+    if not encounterName then return end
+    
+    CheckNewSession()
     
     for _, mount in ipairs(RaidMount.mountInstances or {}) do
         local bossToMatch = mount.bossName
@@ -316,19 +358,30 @@ function RaidMount.RecordBossAttempt(encounterName, difficultyName)
                     total = 0,
                     characters = {},
                     lastAttempt = nil,
-                    collected = false
+                    collected = false,
+                    sessionHistory = {} -- New: session-based attempt history
                 }
             end
+            
             local charKey = UnitName("player") .. "-" .. GetRealmName()
             RaidMountAttempts[trackingKey].total = (RaidMountAttempts[trackingKey].total or 0) + 1
             RaidMountAttempts[trackingKey].characters[charKey] = (RaidMountAttempts[trackingKey].characters[charKey] or 0) + 1
+            
             -- Add/update class info for this character
             RaidMountAttempts[trackingKey].classes = RaidMountAttempts[trackingKey].classes or {}
             RaidMountAttempts[trackingKey].classes[charKey] = select(2, UnitClass("player")) -- e.g., "DRUID"
+            
             -- Add/update per-character last attempt date in UK format
             RaidMountAttempts[trackingKey].lastAttemptDates = RaidMountAttempts[trackingKey].lastAttemptDates or {}
             RaidMountAttempts[trackingKey].lastAttemptDates[charKey] = date("%d/%m/%y")
             RaidMountAttempts[trackingKey].lastAttempt = time()
+            
+            -- Session history tracking
+            if not RaidMountAttempts[trackingKey].sessionHistory then
+                RaidMountAttempts[trackingKey].sessionHistory = {}
+            end
+            RaidMountAttempts[trackingKey].sessionHistory[currentSessionID] = (RaidMountAttempts[trackingKey].sessionHistory[currentSessionID] or 0) + 1
+            
             if RaidMount.PopulateUI then RaidMount.PopulateUI() end
         end
     end

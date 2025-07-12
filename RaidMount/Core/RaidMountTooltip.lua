@@ -246,39 +246,54 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
             GameTooltip:AddLine(" ", 1, 1, 1)
             table.insert(tooltipData, {type = "text", text = " ", color = {1, 1, 1}})
             
-            local charHeader = "|cFF00CCFFCharacter Attempts:|r"
+            local charHeader = "|cFF00CCFFCharacter Attempts This Week:|r"
             GameTooltip:AddLine(charHeader, 0.8, 0.8, 1)
             table.insert(tooltipData, {type = "text", text = charHeader, color = {0.8, 0.8, 1}})
             
             local characterAttempts = {}
+            local lockedOutCount = 0
+            local currentTime = time()
+            local currentDate = date("*t", currentTime)
+            local daysUntilTuesday = (3 - currentDate.wday + 7) % 7
+            if daysUntilTuesday == 0 and currentDate.hour < 9 then daysUntilTuesday = 0 elseif daysUntilTuesday == 0 then daysUntilTuesday = 7 end
+            local nextResetTime = time({year = currentDate.year, month = currentDate.month, day = currentDate.day + daysUntilTuesday, hour = 9, min = 0, sec = 0})
+            local lastResetTime = nextResetTime - (7 * 24 * 60 * 60)
             for charName, count in pairs(attemptData.characters) do
-                if type(count) == "number" and count > 0 then
+                if type(count) == "number" and count > 0 and attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] then
+                    local lastAttemptDate = attemptData.lastAttemptDates[charName]
+                    local day, month, year = lastAttemptDate:match("(%d+)/(%d+)/(%d+)")
+                    if day and month and year then
+                        year = tonumber(year)
+                        if year < 50 then year = year + 2000 else year = year + 1900 end
+                        local lastAttemptTime = time({year = year, month = tonumber(month), day = tonumber(day), hour = 0, min = 0, sec = 0})
+                        if lastAttemptTime > lastResetTime then
                     local shortName = charName:match("([^%-]+)") or charName
                     table.insert(characterAttempts, {name = shortName, count = count})
+                            lockedOutCount = lockedOutCount + 1
+                        end
+                    end
                 end
             end
-            
             table.sort(characterAttempts, function(a, b) return a.count > b.count end)
-            
-            local maxShow = math.min(8, #characterAttempts)
-            for i = 1, maxShow do
+            if lockedOutCount > 0 then
+                for i = 1, math.min(8, #characterAttempts) do
                 local char = characterAttempts[i]
-                -- Get class color for this character
-                local r, g, b = GetClassColor(char.name)
-                GameTooltip:AddDoubleLine("  " .. char.name .. ":", tostring(char.count), r, g, b, 1, 1, 1)
+                    GameTooltip:AddLine("  |cFFFF3333" .. char.name .. "|r: " .. tostring(char.count), 1, 0.2, 0.2)
                 table.insert(tooltipData, {
-                    type = "double", 
-                    left = "  " .. char.name .. ":", 
-                    right = tostring(char.count), 
-                    leftColor = {r, g, b}, 
-                    rightColor = {1, 1, 1}
+                        type = "text",
+                        text = "  " .. char.name .. ": " .. tostring(char.count),
+                        color = {1, 0.2, 0.2}
                 })
             end
-            
-            if #characterAttempts > maxShow then
-                local moreText = "  ... and " .. (#characterAttempts - maxShow) .. " more"
+                if #characterAttempts > 8 then
+                    local moreText = "  ... and " .. (#characterAttempts - 8) .. " more"
                 GameTooltip:AddLine(moreText, 0.6, 0.6, 0.6)
                 table.insert(tooltipData, {type = "text", text = moreText, color = {0.6, 0.6, 0.6}})
+                end
+            else
+                local noneText = "  No characters locked out this week."
+                GameTooltip:AddLine(noneText, 0.7, 0.7, 0.7)
+                table.insert(tooltipData, {type = "text", text = noneText, color = {0.7, 0.7, 0.7}})
             end
         end
     end
@@ -295,9 +310,16 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
     -- Collection status
     GameTooltip:AddLine(" ", 1, 1, 1) -- Blank line
     table.insert(tooltipData, {type = "text", text = " ", color = {1, 1, 1}})
-    
-    local statusText = mount.collected and "|cFFFF0000Collected|r" or "|cFF00FF00Not Collected|r"
-    local statusLine = "|cFFFFFF00Status:|r " .. statusText
+
+    local statusText, statusColor
+    if mount.collected then
+        statusText = "Collected"
+        statusColor = "|cFF00FF00" -- green
+    else
+        statusText = "Not Collected"
+        statusColor = "|cFFFF3333" -- red
+    end
+    local statusLine = "|cFFFFFF00Status:|r " .. statusColor .. statusText .. "|r"
     GameTooltip:AddLine(statusLine, 1, 1, 1)
     table.insert(tooltipData, {type = "text", text = statusLine, color = {1, 1, 1}})
     

@@ -17,6 +17,9 @@ RaidMount.sortColumn = RaidMount.sortColumn or "mountName"
 RaidMount.sortDescending = RaidMount.sortDescending or false
 RaidMount.isStatsView = RaidMount.isStatsView or false
 
+-- Track last non-stats view
+RaidMount.lastViewType = RaidMount.lastViewType or "list"
+
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
 local function PrintAddonMessage(message, isError)
@@ -175,7 +178,7 @@ function RaidMount.CreateMainFrame()
     -- Title
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -15)
-    title:SetText("|cFF33CCFFRaid|r |cFF33CCFFDungeon|r |cFFFF0000Mount|r |cFFFFD700Tracker|r")
+    title:SetText("|cFF33CCFFRaid|r and |cFF33CCFFDungeon|r |cFFFF0000Mount|r |cFFFFD700Tracker|r")
     title:SetFont(cachedFontPath, 24, "OUTLINE")
     
     -- Make frame movable
@@ -287,7 +290,7 @@ function RaidMount.CreateButtons()
     -- Version text
     local versionText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     versionText:SetPoint("BOTTOMLEFT", 10, 10)
-    versionText:SetText("|cFF666666Version: 10.07.25.20|r")
+            versionText:SetText("|cFF666666Version: 12.07.25.25|r")
     versionText:SetTextColor(0.4, 0.4, 0.4, 1)
     
     -- Enhanced tooltips checkbox
@@ -376,62 +379,82 @@ function RaidMount.PopulateUI()
         RaidMount.SetFilteredData(filteredData)
     end
     
+    -- Update icon view if it's active
+    if RaidMount.isIconView and RaidMount.RefreshIconView then
+        RaidMount.RefreshIconView()
+    end
+    
     -- Update mount counts
     RaidMount.UpdateMountCounts()
 end
 
--- TOGGLE STATS VIEW
-function RaidMount.ToggleStatsView()
-    RaidMount.isStatsView = not RaidMount.isStatsView
-    if RaidMount.isStatsView then
+-- Centralized view management
+function RaidMount.ShowView(viewType)
+    -- Aggressively hide all possible views first
+    if RaidMount.StatsFrame then
+        RaidMount.StatsFrame:Hide()
+        RaidMount.StatsFrame:SetParent(nil)
+        RaidMount.StatsFrame = nil
+    end
+    if RaidMount.HideIconView then RaidMount.HideIconView() end
+    if RaidMount.ScrollFrame then RaidMount.ScrollFrame:Hide() end
+
+    -- Show the requested view
+    if viewType == "stats" then
+        RaidMount.isStatsView = true
         RaidMount.ShowDetailedStatsView()
-    else
-        -- Clean up stats frame and show scroll frame
-        if RaidMount.StatsFrame then
-            RaidMount.StatsFrame:Hide()
-            RaidMount.StatsFrame:SetParent(nil)
-            RaidMount.StatsFrame = nil
-        end
+    elseif viewType == "icon" then
+        RaidMount.isStatsView = false
+        RaidMount.isIconView = true
+        RaidMount.lastViewType = "icon"
+        RaidMount.ShowIconView()
+    elseif viewType == "list" then
+        RaidMount.isStatsView = false
+        RaidMount.isIconView = false
+        RaidMount.lastViewType = "list"
         if RaidMount.ScrollFrame then
             RaidMount.ScrollFrame:Show()
+            RaidMount.ScrollFrame:SetVerticalScroll(0)
+            if RaidMount.ClearVisibleRows then RaidMount.ClearVisibleRows() end
+            if RaidMount.PopulateUI then RaidMount.PopulateUI() end
+            -- Force a full list rebuild
+            if RaidMount.GetCombinedMountData and RaidMount.FilterAndSortMountData and RaidMount.SetFilteredData then
+                local mountData = RaidMount.GetCombinedMountData()
+                local filteredData = RaidMount.FilterAndSortMountData(mountData)
+                RaidMount.SetFilteredData(filteredData)
+            end
+            C_Timer.After(0, function()
+                if RaidMount.UpdateVisibleRowsOptimized then
+                    RaidMount.UpdateVisibleRowsOptimized()
+                elseif RaidMount.UpdateVisibleRows then
+                    RaidMount.UpdateVisibleRows()
+                end
+            end)
         end
-        RaidMount.PopulateUI()
     end
 end
 
+-- Refactor stats toggle to use ShowView
+function RaidMount.ToggleStatsView()
+    RaidMount.isStatsView = not RaidMount.isStatsView
+    if RaidMount.isStatsView then
+        RaidMount.ShowView("stats")
+    else
+        RaidMount.ShowView(RaidMount.lastViewType or "list")
+    end
+end
 
-
--- Initialize UI system
+-- On UI load or /reload, show only the correct view
 local frame = CreateFrame("Frame")
-frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript("OnEvent", function(self, event, addonName)
-    if event == "ADDON_LOADED" and addonName == "RaidMount" then
-        -- Build lookup tables for optimized performance
-        C_Timer.After(1, function()
-            if RaidMount.BuildMountLookupTables then
-                RaidMount.BuildMountLookupTables()
-            end
-        end)
-        -- Build initial static cache
-        C_Timer.After(3, function()
-            if RaidMount.GetCombinedMountData then
-                RaidMount.GetCombinedMountData() -- This will build the static cache
-            end
-        end)
-    elseif event == "PLAYER_LOGIN" then
-        -- Rebuild lookup tables after login when all data is available
-        C_Timer.After(2, function()
-            if RaidMount.BuildMountLookupTables then
-                RaidMount.BuildMountLookupTables()
-            end
-        end)
-        -- Build initial static cache after login
-        C_Timer.After(5, function()
-            if RaidMount.GetCombinedMountData then
-                RaidMount.GetCombinedMountData() -- This will build the static cache
-            end
-        end)
+    if event == "PLAYER_LOGIN" or (event == "ADDON_LOADED" and addonName == "RaidMount") then
+        if RaidMount.isStatsView then
+            RaidMount.ShowView("stats")
+        else
+            RaidMount.ShowView(RaidMount.lastViewType or "list")
+        end
     end
 end)
 

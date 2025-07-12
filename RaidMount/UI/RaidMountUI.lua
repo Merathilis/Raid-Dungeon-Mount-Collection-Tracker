@@ -193,5 +193,8 @@ local function GetAccountWideData(trackingKey)
     }
 end
 
+RaidMount.ShowIconView = RaidMount.ShowIconView or function() end
+RaidMount.HideIconView = RaidMount.HideIconView or function() end
+
 
 

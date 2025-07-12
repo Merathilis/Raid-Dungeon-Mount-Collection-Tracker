@@ -329,7 +329,7 @@ function RaidMount.CreateFilterDropdowns()
     local contentTypeDropdown = CreateFrame("Frame", "RaidMountContentTypeDropdown", filterContainer, "UIDropDownMenuTemplate")
     contentTypeDropdown:SetPoint("TOPLEFT", 300, row1Y)
     UIDropDownMenu_Initialize(contentTypeDropdown, function()
-        local options = {"All", "Raid", "Dungeon", "World Boss", "Holiday Event"}
+        local options = {"All", "Raid", "Dungeon", "World"}
         for _, option in ipairs(options) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = option
@@ -398,6 +398,30 @@ function RaidMount.CreateFilterDropdowns()
     
     RaidMount.ClearFiltersButton = clearFiltersButton
     
+    -- Icon View toggle button (positioned to the right of Clear All)
+    local iconViewButton = CreateFrame("Button", nil, filterContainer, "UIPanelButtonTemplate")
+    iconViewButton:SetSize(90, 22)
+    iconViewButton:SetPoint("LEFT", clearFiltersButton, "RIGHT", 10, 0)
+    iconViewButton:SetText("Icon View")
+    iconViewButton:SetScript("OnClick", function()
+        if RaidMount.isIconView then
+            RaidMount.ShowView("list")
+            iconViewButton:SetText("Icon View")
+        else
+            RaidMount.ShowView("icon")
+            iconViewButton:SetText("List View")
+        end
+        -- Hide headers in Icon View, show in List View
+        if RaidMount.HeaderTexts then
+            for _, headerData in ipairs(RaidMount.HeaderTexts) do
+                if headerData.header then
+                    headerData.header:SetShown(not RaidMount.isIconView)
+                end
+            end
+        end
+    end)
+    filterContainer.IconViewButton = iconViewButton
+    
     -- Add clean labels above each filter
     local labelY = -15
     local labelColor = {0.7, 0.7, 0.7, 1}
@@ -435,8 +459,8 @@ function RaidMount.FilterAndSortMountData(mountData)
     local searchWords = {}
     local hasSearch = false
     if RaidMount.currentSearch and RaidMount.currentSearch ~= "" then
-        searchText = RaidMount.currentSearch:lower():trim()
-        if searchText ~= "" then
+        searchText = tostring(RaidMount.currentSearch):lower():gsub("^%s+", ""):gsub("%s+$", "")
+        if searchText ~= "" and searchText ~= RaidMount.L("SEARCH_PLACEHOLDER"):lower() then
             hasSearch = true
             -- Pre-split search words for efficiency
             for word in searchText:gmatch("%S+") do
@@ -471,26 +495,27 @@ function RaidMount.FilterAndSortMountData(mountData)
             end
         end
         
-        -- Filter by expansion (improved matching)
+        -- Expansion filter
         if currentExpansionFilter ~= "All" then
-            local mountExpansion = mount.expansion or "Unknown"
-            if mountExpansion ~= currentExpansionFilter then
+            local mountExpansion = (mount.expansion or "Unknown"):lower()
+            if mountExpansion ~= currentExpansionFilter:lower() then
                 includeMount = false
             end
         end
         
-        -- Filter by content type (improved matching)
+        -- Content type filter
         if currentContentTypeFilter ~= "All" then
-            local mountContentType = mount.contentType or "Unknown"
-            if mountContentType ~= currentContentTypeFilter then
+            local mountContentType = (mount.contentType or "Unknown"):lower():gsub("%s+", "")
+            local filterContentType = (currentContentTypeFilter or "Unknown"):lower():gsub("%s+", "")
+            if not mountContentType:find(filterContentType, 1, true) then
                 includeMount = false
             end
         end
         
-        -- Filter by difficulty (improved matching)
+        -- Difficulty filter
         if currentDifficultyFilter ~= "All" then
-            local mountDifficulty = mount.difficulty or "Unknown"
-            if mountDifficulty ~= currentDifficultyFilter then
+            local mountDifficulty = (mount.difficulty or "Unknown"):lower()
+            if mountDifficulty ~= currentDifficultyFilter:lower() then
                 includeMount = false
             end
         end

@@ -5,6 +5,8 @@ RaidMount = RaidMount or {}
 function RaidMount.GetRaidLockout(instanceName)
     if not instanceName then return "No lockout" end
     
+    -- Debug block removed
+    
     for i = 1, GetNumSavedInstances() do
         local name, id, reset, difficulty, locked, extended, instanceIDMostSig, isRaid, maxPlayers, difficultyName = GetSavedInstanceInfo(i)
         

@@ -232,6 +232,31 @@ function RaidMount.StoreClassData(trackingKey, characterName)
     end
 end
 
+-- Add this helper near the top (after local variables):
+local function GetMountIcon(data)
+    local iconTexture = "Interface/Icons/INV_Misc_QuestionMark"
+    if data.mountID and C_MountJournal then
+        local _, _, iconFile = C_MountJournal.GetMountInfoByID(data.mountID)
+        if iconFile then
+            iconTexture = iconFile
+        else
+            if data.spellID then
+                local mountIDs = C_MountJournal.GetMountIDs()
+                if mountIDs then
+                    for _, mountID in ipairs(mountIDs) do
+                        local name, spellID, icon = C_MountJournal.GetMountInfoByID(mountID)
+                        if spellID == data.spellID and icon then
+                            iconTexture = icon
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return iconTexture
+end
+
 -- Show info panel with mount data
 function RaidMount.ShowInfoPanel(data)
     if not RaidMount.RaidMountFrame or not RaidMount.RaidMountFrame.infoPanel then return end
@@ -240,12 +265,7 @@ function RaidMount.ShowInfoPanel(data)
     panel:Show()
     
     -- Icon
-    local icon = "Interface\\Icons\\INV_Misc_QuestionMark"
-    if data.mountID and C_MountJournal then
-        local _, _, iconFile = C_MountJournal.GetMountInfoByID(data.mountID)
-        if iconFile then icon = iconFile end
-    end
-    panel.icon:SetTexture(icon)
+    panel.icon:SetTexture(GetMountIcon(data))
     
     -- Mount Name with rarity coloring - truncated if too long
     local nameColor = "|cFFA335EE" -- Default purple for raid mounts
