@@ -8,24 +8,20 @@ local CreateStandardFontString = RaidMount.CreateStandardFontString
 local CreateStandardDropdown = RaidMount.CreateStandardDropdown
 local PrintAddonMessage = RaidMount.PrintAddonMessage
 
--- UI State variables (shared across modules)
 RaidMount.currentFilter = RaidMount.currentFilter or "All"
 RaidMount.currentContentTypeFilter = RaidMount.currentContentTypeFilter or "All"
+RaidMount.currentDifficultyFilter = RaidMount.currentDifficultyFilter or "All"
 RaidMount.currentSearch = RaidMount.currentSearch or ""
 RaidMount.currentExpansionFilter = RaidMount.currentExpansionFilter or "All"
 RaidMount.sortColumn = RaidMount.sortColumn or "mountName"
 RaidMount.sortDescending = RaidMount.sortDescending or false
 RaidMount.isStatsView = RaidMount.isStatsView or false
 
--- Cache frequently accessed values
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
--- Helper function for consistent addon messages
 local function PrintAddonMessage(message, isError)
-    -- Removed for production
 end
 
--- Multi-purpose cleanup function
 local function ClearContentFrameChildren()
     if not RaidMount.ContentFrame then return end
     for _, child in pairs({RaidMount.ContentFrame:GetChildren()}) do
@@ -37,7 +33,6 @@ local function ClearContentFrameChildren()
         end
         RaidMount.statsElements = {}
     end
-    -- Clean up stats frame if it exists
     if RaidMount.StatsFrame then
         RaidMount.StatsFrame:Hide()
         RaidMount.StatsFrame:SetParent(nil)
@@ -45,7 +40,6 @@ local function ClearContentFrameChildren()
     end
 end
 
--- Batch dropdown reset
 local function ResetDropdown(dropdown, value)
     if dropdown then
         UIDropDownMenu_SetSelectedName(dropdown, value)
@@ -53,23 +47,23 @@ local function ResetDropdown(dropdown, value)
     end
 end
 
--- Consolidated filter reset
 local function ResetAllFilters()
-    RaidMount.currentFilter, RaidMount.currentExpansionFilter, RaidMount.currentContentTypeFilter, RaidMount.currentSearch = "All", "All", "All", ""
-    for _, dropdown in pairs({RaidMount.ExpansionDropdown, RaidMount.CollectedDropdown, RaidMount.ContentTypeDropdown}) do
+    RaidMount.currentFilter, RaidMount.currentExpansionFilter, RaidMount.currentContentTypeFilter, RaidMount.currentDifficultyFilter, RaidMount.currentSearch = "All", "All", "All", "All", ""
+    for _, dropdown in pairs({RaidMount.ExpansionDropdown, RaidMount.CollectedDropdown, RaidMount.ContentTypeDropdown, RaidMount.DifficultyDropdown}) do
         ResetDropdown(dropdown, "All")
     end
-    if RaidMount.SearchBox then RaidMount.SearchBox:SetText("") end
+    if RaidMount.SearchBox then 
+        RaidMount.SearchBox:SetText("Search mounts, raids, or bosses...")
+        RaidMount.SearchBox:SetTextColor(0.6, 0.6, 0.6, 1)
+    end
 end
 
--- MAIN UI CREATION FUNCTION
 function RaidMount.ShowUI()
     if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() then
         RaidMount.RaidMountFrame:Hide()
         return
     end
     
-    -- Reset stats view when opening
     RaidMount.isStatsView = false
     
     if not RaidMount.RaidMountFrame then
@@ -80,33 +74,32 @@ function RaidMount.ShowUI()
     RaidMount.PopulateUI()
 end
 
--- CREATE COLUMN HEADERS
 function RaidMount.CreateColumnHeaders()
     local frame = RaidMount.RaidMountFrame
     if not frame then return end
     
-    -- Create header frame
     local headerFrame = CreateFrame("Frame", nil, frame)
-    headerFrame:SetPoint("TOPLEFT", 15, -135)
-    headerFrame:SetPoint("TOPRIGHT", -35, -135)
+    headerFrame:SetPoint("TOPLEFT", 15, -150)
+    headerFrame:SetPoint("TOPRIGHT", -35, -150)
     headerFrame:SetHeight(25)
     
-    -- Header background
     local headerBg = headerFrame:CreateTexture(nil, "BACKGROUND")
     headerBg:SetAllPoints()
     headerBg:SetColorTexture(0.02, 0.02, 0.02, 0.95)
     
-    -- Column definitions matching mount list positions exactly
     local columns = {
-        {text = "Mount", pos = 50, width = 200, align = "LEFT"},
-        {text = "Raid", pos = 260, width = 150, align = "LEFT"},
-        {text = "Boss", pos = 420, width = 120, align = "LEFT"},
-        {text = "Drop Rate", pos = 550, width = 80, align = "CENTER"},
-        {text = "Expansion", pos = 640, width = 100, align = "LEFT"},
-        {text = "Attempts", pos = 750, width = 60, align = "CENTER"},
-        {text = "Collected", pos = 820, width = 50, align = "CENTER"},
-        {text = "Raid Available", pos = 850, width = 100, align = "CENTER"}
+        {text = "Mount", pos = 50, width = 180, align = "LEFT", sortKey = "mountName"},
+        {text = "Raid", pos = 240, width = 130, align = "LEFT", sortKey = "raidName"},
+        {text = "Boss", pos = 380, width = 100, align = "LEFT", sortKey = "bossName"},
+        {text = "Drop Rate", pos = 490, width = 70, align = "CENTER", sortKey = "dropRate"},
+        {text = "Expansion", pos = 570, width = 90, align = "LEFT", sortKey = "expansion"},
+        {text = "Attempts", pos = 670, width = 50, align = "CENTER", sortKey = "attempts"},
+        {text = "Collected", pos = 730, width = 50, align = "CENTER", sortKey = "collected"},
+        {text = "Lockout", pos = 790, width = 120, align = "CENTER", sortKey = "lockout"},
+        {text = RaidMount.L("COORDINATES"), pos = 920, width = 80, align = "CENTER", sortKey = "coordinates"}
     }
+    
+    local headerTexts = {}
     
     for i, column in ipairs(columns) do
         local header = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -117,30 +110,40 @@ function RaidMount.CreateColumnHeaders()
         header:SetTextColor(0.8, 0.8, 0.8, 1)
         header:SetText(column.text)
         
-        -- Add sorting functionality
+        headerTexts[i] = {header = header, originalText = column.text, sortKey = column.sortKey}
+        
+        if not header then
+            print("RaidMount: Error - Failed to create header for column " .. column.text)
+        end
+        
         local button = CreateFrame("Button", nil, headerFrame)
         button:SetPoint("LEFT", headerFrame, "LEFT", column.pos, 0)
         button:SetSize(column.width, 25)
+        
+        button:SetScript("OnEnter", function(self)
+            header:SetTextColor(1, 1, 0, 1)
+        end)
+        
+        button:SetScript("OnLeave", function(self)
+            header:SetTextColor(0.8, 0.8, 0.8, 1)
+        end)
+        
         button:SetScript("OnClick", function()
-            -- Toggle sort order if clicking same column
-            local sortKey = column.text:lower():gsub(" ", "")
-            if RaidMount.sortColumn == sortKey then
+            if RaidMount.sortColumn == column.sortKey then
                 RaidMount.sortDescending = not RaidMount.sortDescending
             else
-                RaidMount.sortColumn = sortKey
+                RaidMount.sortColumn = column.sortKey
                 RaidMount.sortDescending = false
             end
             
-            -- Update header text to show sort direction
-            local arrow = RaidMount.sortDescending and " ▼" or " ▲"
-            header:SetText(column.text .. arrow)
-            
-            -- Clear arrows from other headers
-            for j, otherCol in ipairs(columns) do
-                if j ~= i then
-                    local otherHeader = headerFrame:GetChildren()
-                    -- Find the correct header and reset its text
-                    -- This is a simplified approach - in practice you'd store header references
+            for j, headerData in ipairs(headerTexts) do
+                if headerData.sortKey == RaidMount.sortColumn then
+                    local arrowChar = RaidMount.sortDescending and " |TInterface\\Buttons\\Arrow-Down-Up:12:12|t" or " |TInterface\\Buttons\\Arrow-Up-Up:12:12|t"
+                    headerData.header:SetText(headerData.originalText .. arrowChar)
+                    headerData.header:SetTextColor(1, 0.8, 0, 1)
+                else
+                    headerData.header:SetText(headerData.originalText)
+                    headerData.header:SetTextColor(0.8, 0.8, 0.8, 1)
                 end
             end
             
@@ -149,18 +152,17 @@ function RaidMount.CreateColumnHeaders()
     end
     
     RaidMount.HeaderFrame = headerFrame
+    RaidMount.HeaderTexts = headerTexts
 end
 
--- CREATE MAIN FRAME
 function RaidMount.CreateMainFrame()
     if RaidMount.RaidMountFrame then return RaidMount.RaidMountFrame end
     
     local frame = CreateFrame("Frame", "RaidMountFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(1000, 700)
+    frame:SetSize(1050, 700)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
     
-    -- Frame backdrop
     frame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -173,7 +175,7 @@ function RaidMount.CreateMainFrame()
     -- Title
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -15)
-    title:SetText("|cFFFFD700Raid & Dungeon Mount Tracker|r")
+    title:SetText("|cFF33CCFFRaid|r |cFF33CCFFDungeon|r |cFFFF0000Mount|r |cFFFFD700Tracker|r")
     title:SetFont(cachedFontPath, 24, "OUTLINE")
     
     -- Make frame movable
@@ -197,6 +199,7 @@ function RaidMount.CreateMainFrame()
     RaidMount.CreateProgressBar()
     RaidMount.CreateButtons()
     RaidMount.CreateInfoPanel(frame)
+    RaidMount.CreateFilterStatusDisplay(frame)
     
     return frame
 end
@@ -209,7 +212,7 @@ function RaidMount.CreateScrollFrame()
     if not frame then return end
     
     local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", 15, -165)
+    scrollFrame:SetPoint("TOPLEFT", 15, -180)
     scrollFrame:SetPoint("BOTTOMRIGHT", -35, 160) -- More space for larger info panel
     
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
@@ -259,8 +262,8 @@ function RaidMount.CreateProgressBar()
         local total = self.total or 0
         local percent = total > 0 and (collected / total * 100) or 0
         GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
-        GameTooltip:SetText("Mount Collection Progress", 1, 1, 1)
-        GameTooltip:AddLine(string.format("Collected: |cFF00FF00%d|r / |cFFFFFFFF%d|r (|cFFFFFF00%.1f%%|r)", collected, total, percent), 1, 1, 1)
+        GameTooltip:SetText(RaidMount.L("PROGRESS_TOOLTIP"), 1, 1, 1)
+        GameTooltip:AddLine(string.format(RaidMount.L("PROGRESS_FORMAT"), collected, total, percent), 1, 1, 1)
         GameTooltip:Show()
     end)
     progressBar:SetScript("OnLeave", function(self)
@@ -277,14 +280,14 @@ function RaidMount.CreateButtons()
     local statsBtn = CreateFrame("Button", "RaidMountStatsButton", frame, "UIPanelButtonTemplate")
     statsBtn:SetSize(100, 30)
     statsBtn:SetPoint("TOPRIGHT", -30, -55) -- Below the progress bar, right aligned
-    statsBtn:SetText("Stats")
+    statsBtn:SetText(RaidMount.L("STATS"))
     statsBtn:SetScript("OnClick", function() RaidMount.ToggleStatsView() end)
     frame.StatsButton = statsBtn
     
     -- Version text
     local versionText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     versionText:SetPoint("BOTTOMLEFT", 10, 10)
-    versionText:SetText("|cFF666666Version: 07.07.25.15|r")
+    versionText:SetText("|cFF666666Version: 10.07.25.20|r")
     versionText:SetTextColor(0.4, 0.4, 0.4, 1)
     
     -- Enhanced tooltips checkbox
@@ -292,56 +295,90 @@ function RaidMount.CreateButtons()
     tooltipCheckbox:SetSize(20, 20)
     tooltipCheckbox:SetPoint("BOTTOMRIGHT", -15, 10)
     tooltipCheckbox:SetChecked(RaidMountSaved and RaidMountSaved.enhancedTooltip ~= false)
-    
+
+    -- Popup enabled checkbox
+    local popupCheckbox = CreateFrame("CheckButton", "RaidMountPopupCheckbox", frame, "UICheckButtonTemplate")
+    popupCheckbox:SetSize(20, 20)
+    popupCheckbox:SetPoint("RIGHT", tooltipCheckbox, "LEFT", -90, 0)
+    popupCheckbox:SetChecked(RaidMountSaved and RaidMountSaved.popupEnabled ~= false)
+
+    -- Popup label
+    local popupLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    popupLabel:SetPoint("RIGHT", popupCheckbox, "LEFT", -8, 0)
+    popupLabel:SetText("|cFF999999World Boss Alert|r")
+    popupLabel:SetTextColor(0.6, 0.6, 0.6, 1)
+
     -- Checkbox label
     local tooltipLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     tooltipLabel:SetPoint("RIGHT", tooltipCheckbox, "LEFT", -5, 0)
-    tooltipLabel:SetText("|cFF999999Enhanced Tooltips|r")
+    tooltipLabel:SetText("|cFF999999" .. RaidMount.L("ENHANCED_TOOLTIPS") .. "|r")
     tooltipLabel:SetTextColor(0.6, 0.6, 0.6, 1)
-    
+
     -- Checkbox functionality
     tooltipCheckbox:SetScript("OnClick", function(self)
         RaidMountTooltipEnabled = self:GetChecked()
         if not RaidMountSaved then RaidMountSaved = {} end
         RaidMountSaved.enhancedTooltip = RaidMountTooltipEnabled
-        if RaidMountTooltipEnabled then
-            -- Removed for production
-        else
-            -- Removed for production
-        end
     end)
-    
+    popupCheckbox:SetScript("OnClick", function(self)
+        if not RaidMountSaved then RaidMountSaved = {} end
+        RaidMountSaved.popupEnabled = self:GetChecked()
+    end)
+
     frame.tooltipCheckbox = tooltipCheckbox
+    frame.popupCheckbox = popupCheckbox
 end
 
--- POPULATE UI WITH MOUNT DATA
-function RaidMount.PopulateUI()
-    if not RaidMount.RaidMountFrame or not RaidMount.RaidMountFrame:IsShown() then return end
-    if RaidMount.isStatsView then return end
-    
-    -- Clear existing content
-    ClearContentFrameChildren()
-    
-    -- Get mount data
-    local mountData = RaidMount.GetCombinedMountData()
-    if not mountData then
-        PrintAddonMessage("No mount data available", true)
-        return
+-- UPDATE HEADER DISPLAY
+function RaidMount.UpdateHeaderDisplay()
+    if not RaidMount.HeaderTexts then 
+        print(RaidMount.L("ERROR_HEADERS_NOT_INIT"))
+        return 
     end
     
-    -- Filter and sort data
+    -- Update all headers to show current sort state
+    for i, headerData in ipairs(RaidMount.HeaderTexts) do
+        -- Safety check to ensure header exists
+        if not headerData or not headerData.header then
+            print(RaidMount.L("ERROR_HEADER_DATA_MISSING", i))
+            return
+        end
+        
+
+        
+        if headerData.sortKey == RaidMount.sortColumn then
+            -- Use Blizzard arrow symbols
+            local arrowChar = RaidMount.sortDescending and " |TInterface\\Buttons\\Arrow-Down-Up:12:12|t" or " |TInterface\\Buttons\\Arrow-Up-Up:12:12|t"
+            headerData.header:SetText(headerData.originalText .. arrowChar)
+            headerData.header:SetTextColor(1, 0.8, 0, 1) -- Gold for active sort
+        else
+            headerData.header:SetText(headerData.originalText)
+            headerData.header:SetTextColor(0.8, 0.8, 0.8, 1) -- Normal color
+        end
+    end
+end
+
+-- POPULATE UI
+function RaidMount.PopulateUI()
+    if not RaidMount.RaidMountFrame or not RaidMount.RaidMountFrame:IsShown() then return end
+    
+    local mountData = RaidMount.GetCombinedMountData()
+    if not mountData then return end
+    
+    -- Filter and sort the data
     local filteredData = RaidMount.FilterAndSortMountData(mountData)
     
-    -- Update progress bar
-    RaidMount.UpdateMountCounts()
+    -- Update header display to show current sort
+    RaidMount.UpdateHeaderDisplay()
     
-    -- Set filtered data for mount list module
+    -- Update the mount list display
     if RaidMount.SetFilteredData then
         RaidMount.SetFilteredData(filteredData)
     end
+    
+    -- Update mount counts
+    RaidMount.UpdateMountCounts()
 end
-
--- Data processing functionality moved to RaidMountUI_Filters.lua
 
 -- TOGGLE STATS VIEW
 function RaidMount.ToggleStatsView()
@@ -362,9 +399,7 @@ function RaidMount.ToggleStatsView()
     end
 end
 
--- Stats functionality moved to RaidMountUI_Stats.lua
 
--- Debug functionality moved to RaidMountUI_Debug.lua
 
 -- Initialize UI system
 local frame = CreateFrame("Frame")
@@ -400,6 +435,19 @@ frame:SetScript("OnEvent", function(self, event, addonName)
     end
 end)
 
+-- CREATE FILTER STATUS DISPLAY
+function RaidMount.CreateFilterStatusDisplay(frame)
+    if not frame then return end
+    
+    -- Create filter status text (positioned below the new filter container)
+    local filterStatusText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    filterStatusText:SetPoint("TOPLEFT", 20, -120)
+            filterStatusText:SetText(RaidMount.L("NO_FILTERS_ACTIVE"))
+    filterStatusText:SetTextColor(0.6, 0.6, 0.6, 1)
+    
+    frame.filterStatusText = filterStatusText
+end
+
 -- Export functions for other modules
 RaidMount.ClearContentFrameChildren = ClearContentFrameChildren
 RaidMount.ResetAllFilters = ResetAllFilters
@@ -408,5 +456,10 @@ RaidMount.ResetDropdown = ResetDropdown
 function RaidMount.HideUI()
     if RaidMount.RaidMountFrame then
         RaidMount.RaidMountFrame:Hide()
+    end
+    
+    -- Reset search state to prevent timer conflicts
+    if RaidMount.ResetSearchState then
+        RaidMount.ResetSearchState()
     end
 end 

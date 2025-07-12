@@ -101,7 +101,7 @@ function RaidMount.CreateInfoPanel(frame)
     local col2Header = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     col2Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 320, -8)
     col2Header:SetFont(cachedFontPath, 14, "OUTLINE")
-    col2Header:SetText("|cFFFFD700ATTEMPT TRACKING|r")
+    col2Header:SetText("|cFFFFD700" .. RaidMount.L("ATTEMPT_TRACKING") .. "|r")
     col2Header:SetTextColor(1, 0.84, 0, 1)
     infoPanel.col2Header = col2Header
 
@@ -148,7 +148,7 @@ function RaidMount.CreateInfoPanel(frame)
     local col3Header = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     col3Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 510, -8)
     col3Header:SetFont(cachedFontPath, 14, "OUTLINE")
-    col3Header:SetText("|cFFFFD700STATUS & LOCKOUT|r")
+    col3Header:SetText("|cFFFFD700" .. RaidMount.L("STATUS_LOCKOUT") .. "|r")
     col3Header:SetTextColor(1, 0.84, 0, 1)
     infoPanel.col3Header = col3Header
 
@@ -187,7 +187,7 @@ function RaidMount.CreateInfoPanel(frame)
     local col4Header = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     col4Header:SetPoint("TOPLEFT", infoPanel, "TOPLEFT", 680, -8)
     col4Header:SetFont(cachedFontPath, 14, "OUTLINE")
-    col4Header:SetText("|cFFFFD700DESCRIPTION|r")
+    col4Header:SetText("|cFFFFD700" .. RaidMount.L("DESCRIPTION") .. "|r")
     col4Header:SetTextColor(1, 0.84, 0, 1)
     infoPanel.col4Header = col4Header
 
@@ -281,29 +281,29 @@ function RaidMount.ShowInfoPanel(data)
     -- Status icon and text
     if data.collected then
         panel.statusIcon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-        panel.statusText:SetText("|cFF00FF00Collected|r")
+        panel.statusText:SetText("|cFF00FF00" .. RaidMount.L("COLLECTED") .. "|r")
     else
         panel.statusIcon:SetTexture("Interface\\RaidFrame\\ReadyCheck-NotReady")
-        panel.statusText:SetText("|cFFFF6666Not Collected|r")
+        panel.statusText:SetText("|cFFFF6666" .. RaidMount.L("NOT_COLLECTED") .. "|r")
     end
     
     -- Column 1: Source Information - now with more space and no header
-    local raidName = data.raidName or data.dungeonName or data.location or "Unknown"
+    local raidName = data.raidName or data.dungeonName or data.location or RaidMount.L("UNKNOWN")
     if #raidName > 22 then raidName = raidName:sub(1, 19) .. "..." end
-    panel.source:SetText("Raid: |cFFFFFFFF" .. raidName .. "|r")
+    panel.source:SetText(RaidMount.L("RAID") .. ": |cFFFFFFFF" .. raidName .. "|r")
     
-    local bossName = data.bossName or "Unknown"
+    local bossName = data.bossName or RaidMount.L("UNKNOWN")
     if #bossName > 22 then bossName = bossName:sub(1, 19) .. "..." end
-    panel.boss:SetText("Boss: |cFFDDA0DD" .. bossName .. "|r")
+    panel.boss:SetText(RaidMount.L("BOSS") .. ": |cFFDDA0DD" .. bossName .. "|r")
     
-    local locationName = data.location or "Unknown"
+    local locationName = data.location or RaidMount.L("UNKNOWN")
     if #locationName > 22 then locationName = locationName:sub(1, 19) .. "..." end
-    panel.location:SetText("Zone: |cFF87CEEB" .. locationName .. "|r")
+    panel.location:SetText(RaidMount.L("ZONE") .. ": |cFF87CEEB" .. locationName .. "|r")
     
     -- Column 2: Attempt Tracking - now with much more space for alts
     local attempts = tonumber(data.attempts) or 0
     local attemptsColor = attempts > 0 and "|cFFFFD700" or "|cFFCCCCCC"
-    panel.totalAttempts:SetText("Total Attempts: " .. attemptsColor .. attempts .. "|r")
+    panel.totalAttempts:SetText(RaidMount.L("TOTAL_ATTEMPTS") .. ": " .. attemptsColor .. attempts .. "|r")
     
     -- Character attempts breakdown - now with 4 lines for more alts
     panel.charAttempts1:SetText("")
@@ -332,10 +332,7 @@ function RaidMount.ShowInfoPanel(data)
                     class = attemptData.classes[charName]
                 end
                 
-                -- Debug: Print class data to see what we're getting
-                if RaidMount.debug then
-                    print("Character: " .. charName .. ", Class: " .. tostring(class))
-                end
+
                 
                 local color = GetClassColor(class)
                 local coloredName = "|cFF" .. color .. shortName .. "|r"
@@ -364,7 +361,7 @@ function RaidMount.ShowInfoPanel(data)
             if characterAttempts[4] then
                 panel.charAttempts4:SetText(characterAttempts[4].name .. ": " .. characterAttempts[4].count .. " attempts (" .. characterAttempts[4].lastAttempt .. ")")
             elseif #characterAttempts > 4 then
-                panel.charAttempts4:SetText("|cFF999999+" .. (#characterAttempts - 3) .. " more characters|r")
+                panel.charAttempts4:SetText("|cFF999999+" .. (#characterAttempts - 3) .. RaidMount.L("MORE_CHARACTERS") .. "|r")
             end
         end
     end
@@ -424,18 +421,18 @@ function RaidMount.ShowInfoPanel(data)
     end
 
     if isLockedOut then
-        panel.lockoutStatus:SetText("Lockout: |cFFFF6666Locked out|r")
-        panel.lockoutTimer:SetText("Next Attempt: " .. lockoutColor .. lockoutTimerText .. "|r")
+        panel.lockoutStatus:SetText(RaidMount.L("LOCKOUT") .. ": |cFFFF6666" .. RaidMount.L("LOCKED_OUT") .. "|r")
+        panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": " .. lockoutColor .. lockoutTimerText .. "|r")
     else
-        panel.lockoutStatus:SetText("Lockout: |cFF00FF00No lockout|r")
-        panel.lockoutTimer:SetText("Next Attempt: |cFF00FF00Available now|r")
+        panel.lockoutStatus:SetText(RaidMount.L("LOCKOUT") .. ": |cFF00FF00" .. RaidMount.L("NO_LOCKOUT") .. "|r")
+        panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": |cFF00FF00" .. RaidMount.L("AVAILABLE_NOW") .. "|r")
     end
     
     -- Add Collector's Bounty information in the Status section
     if data.collectorsBounty then
         local bountyText
         if data.collectorsBounty == true then
-            bountyText = "|cFFFFD700Collector's Bounty:|r |cFF00FF00+5% drop chance|r"
+            bountyText = "|cFFFFD700" .. RaidMount.L("COLLECTORS_BOUNTY") .. "|r |cFF00FF00" .. RaidMount.L("COLLECTORS_BOUNTY_BONUS") .. "|r"
         else
             bountyText = "|cFFFFD700Collector's Bounty:|r |cFFFFFF00" .. data.collectorsBounty .. "|r"
         end
@@ -447,7 +444,7 @@ function RaidMount.ShowInfoPanel(data)
     if data.collected then
         local collectionText = data.collectionDate or "Unknown Date"
         if #collectionText > 18 then collectionText = collectionText:sub(1, 15) .. "..." end
-        panel.collectionDate:SetText("Collected: |cFF00FF00" .. collectionText .. "|r")
+        panel.collectionDate:SetText(RaidMount.L("COLLECTED_ON") .. " |cFF00FF00" .. collectionText .. "|r")
     else
         panel.collectionDate:SetText("")
     end
@@ -472,7 +469,7 @@ function RaidMount.ShowInfoPanel(data)
         end
         panel.description:SetText(descText)
     else
-        panel.description:SetText("No description available.")
+        panel.description:SetText(RaidMount.L("NO_DESCRIPTION"))
     end
 end
 

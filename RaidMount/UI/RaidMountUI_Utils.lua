@@ -24,7 +24,6 @@ RaidMount.COLORS = {
 RaidMount.cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
 function RaidMount.PrintAddonMessage(message, isError)
-    -- Removed for production
 end
 
 function RaidMount.CreateStyledBackground(parent, color, hoverColor)
@@ -89,5 +88,3 @@ function RaidMount.CreateStandardDropdown(parent, options, defaultValue, onSelec
     
     return dropdown
 end
-
- 

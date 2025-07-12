@@ -2,22 +2,42 @@
 ## Notes: Tracks raid and dungeon mount attempts, collections, and lockouts with modernized UI and enhanced features.
 ## Interface: 110107
 ## Author: knutballs @EU Ravencrest
-## Version: 07.07.25.15
+## Version: 12.07.25.21
 ## SavedVariables: RaidMountAttempts, RaidMountSettings, RaidMountSaved
 
 ## X-Category: Boss Encounters
 ## X-Website: https://github.com/j0s0r/RaidMount
 
-MountData.lua
-MountCheck.lua
-LockoutCheck.lua
+# Main addon file (initializes addon table)
 RaidMount.lua
-RaidMountTooltip.lua
+
+# Base localization must load first
+Localization/Localization.lua
+Localization/Localization-enUS.lua
+Localization/Localization-deDE.lua
+Localization/Localization-frFR.lua
+Localization/Localization-esES.lua
+Localization/Localization-ruRU.lua
+Localization/Localization-zhCN.lua
+
+# Core data files
+Data/MountData.lua
+
+# Core functionality
+MountCheck.lua
+Core/LockoutCheck.lua
+Core/RaidMountTooltip.lua
+Core/RaidMountMinimap.lua
+
+# UI modules (after core is loaded)
 UI/RaidMountUI_Utils.lua
 UI/RaidMountUI_Stats.lua
-UI/RaidMountUI_Debug.lua
 UI/RaidMountUI_Filters.lua
 UI/RaidMountUI_Main.lua
 UI/RaidMountUI_MountList.lua
+UI/RaidMountUI_Popup.lua
 UI/RaidMountUI_InfoPanel.lua
-RaidMountUI.lua
+UI/RaidMountUI.lua
+
+# Coordinates file (load after main addon is initialized)
+Data/RaidMountCoordinates.lua

@@ -6,22 +6,19 @@ RaidMount = RaidMount or {}
 local COLORS = RaidMount.COLORS
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
--- Virtual scrolling implementation
 local visibleRows = {}
 local rowPool = {}
-local maxVisibleRows = 30 -- Number of rows to keep in memory
+local maxVisibleRows = 30
 local rowHeight = 25
 local scrollOffset = 0
 local totalRows = 0
 local filteredData = {}
 
--- Texture preloading system for smooth scrolling
 RaidMount.textureCache = RaidMount.textureCache or {}
 local textureCache = RaidMount.textureCache
 local preloadQueue = {}
-local preloadDistance = 10 -- Preload icons for next 10 rows
+local preloadDistance = 10
 
--- Helper function to get lockout info
 local function GetLockoutInfo(data)
     if not data or not data.raidName then
         return false, nil
@@ -38,10 +35,8 @@ end
 local function PreloadTexture(mountID)
     if not mountID or textureCache[mountID] then return end
     
-    -- Queue texture for preloading
     table.insert(preloadQueue, mountID)
     
-    -- Process queue in chunks to avoid frame drops
     if #preloadQueue == 1 then
         C_Timer.After(0.01, function()
             local toProcess = math.min(5, #preloadQueue)
@@ -55,10 +50,8 @@ local function PreloadTexture(mountID)
                 end
             end
             
-            -- Continue processing if more in queue
             if #preloadQueue > 0 then
                 C_Timer.After(0.01, function()
-                    -- Recursive call to process more
                     local nextBatch = math.min(5, #preloadQueue)
                     for i = 1, nextBatch do
                         local id = table.remove(preloadQueue, 1)
@@ -77,19 +70,16 @@ end
 
 local function GetCachedTexture(mountID)
     if textureCache[mountID] then
-        -- Track cache hit
         if RaidMount.performanceStats then
             RaidMount.performanceStats.textureCache.hits = (RaidMount.performanceStats.textureCache.hits or 0) + 1
         end
         return textureCache[mountID]
     end
     
-    -- Track cache miss
     if RaidMount.performanceStats then
         RaidMount.performanceStats.textureCache.misses = (RaidMount.performanceStats.textureCache.misses or 0) + 1
     end
     
-    -- Fallback to direct lookup
     local mountInfo = C_MountJournal.GetMountInfoByID(mountID)
     if mountInfo then
         textureCache[mountID] = mountInfo.iconFileID
@@ -99,7 +89,6 @@ local function GetCachedTexture(mountID)
     return nil
 end
 
--- Preload textures for upcoming rows
 local function PreloadUpcomingTextures(startIndex, endIndex)
     for i = startIndex, math.min(endIndex + preloadDistance, totalRows) do
         if filteredData[i] then
@@ -111,18 +100,15 @@ local function PreloadUpcomingTextures(startIndex, endIndex)
     end
 end
 
--- Row pool management
 local function GetRowFromPool(parent)
     local row = table.remove(rowPool)
     if not row then
         row = CreateFrame("Frame", nil, parent)
         row:SetHeight(rowHeight)
         
-        -- Create background
         row.bg = row:CreateTexture(nil, "BACKGROUND")
         row.bg:SetAllPoints()
         
-        -- Create text elements (10 columns max)
         row.texts = {}
         for i = 1, 10 do
             local text = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -130,7 +116,6 @@ local function GetRowFromPool(parent)
             row.texts[i] = text
         end
         
-        -- Set up tooltip and click handlers
         row:EnableMouse(true)
         row:SetScript("OnEnter", function(self)
             if self.data and RaidMountTooltipEnabled then
@@ -140,7 +125,6 @@ local function GetRowFromPool(parent)
             end
             self.bg:SetColorTexture(unpack(COLORS.primaryDark or {0.2, 0.2, 0.2, 1}))
             
-            -- Show info panel
             if self.data and RaidMount.RaidMountFrame and RaidMount.RaidMountFrame.infoPanel then
                 if RaidMount.ShowInfoPanel then
                     RaidMount.ShowInfoPanel(self.data)
@@ -153,13 +137,11 @@ local function GetRowFromPool(parent)
             if self.originalRowColor then
                 self.bg:SetColorTexture(unpack(self.originalRowColor))
             end
-            -- Hide info panel
             if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame.infoPanel then
                 RaidMount.RaidMountFrame.infoPanel:Hide()
             end
         end)
         
-        -- Mount preview click handler removed
     end
     
     row:Show()
@@ -175,35 +157,31 @@ local function ReturnRowToPool(row)
     end
 end
 
--- UPDATE ROW CONTENT
 function RaidMount.UpdateRowContent(row, data)
     if not row or not data then return end
     
-    -- Set row data
     row.data = data
     
-    -- Set background color (alternating)
     local rowColor = {0.05, 0.05, 0.1, 0.3}
     row.bg:SetColorTexture(unpack(rowColor))
     row.originalRowColor = rowColor
     
-    -- Clear all text first
     for i = 1, #row.texts do
         row.texts[i]:SetText("")
         row.texts[i]:ClearAllPoints()
     end
     
-    -- Column positions - updated to remove Last Attempt and add Lockout
     local columns = {
         {pos = 10, width = 30}, -- Icon
-        {pos = 50, width = 200}, -- Mount Name
-        {pos = 260, width = 150}, -- Raid/Source
-        {pos = 420, width = 120}, -- Boss
-        {pos = 550, width = 80}, -- Drop Rate
-        {pos = 640, width = 100}, -- Expansion
-        {pos = 750, width = 60}, -- Attempts
-        {pos = 820, width = 50}, -- Status
-        {pos = 850, width = 100}, -- Lockout 
+        {pos = 50, width = 180}, -- Mount Name
+        {pos = 240, width = 130}, -- Raid/Source
+        {pos = 380, width = 100}, -- Boss
+        {pos = 490, width = 70}, -- Drop Rate
+        {pos = 570, width = 90}, -- Expansion
+        {pos = 670, width = 50}, -- Attempts
+        {pos = 730, width = 50}, -- Status
+        {pos = 790, width = 120}, -- Lockout 
+        {pos = 920, width = 60}, -- Coordinates
     }
     
     -- Icon (using texture instead of text)
@@ -220,19 +198,14 @@ function RaidMount.UpdateRowContent(row, data)
     end
     row.icon:SetTexture(iconTexture)
     
-    -- Mount Name (colored by rarity like mount journal)
-    local nameColor = "|cFFFFFFFF" -- Default white
+    local nameColor = "|cFFFFFFFF"
     if data.mountID and C_MountJournal then
         local mountName, spellID, iconFile, isActive, isUsable, sourceType, isFavorite, isFactionSpecific, faction, shouldHideOnChar, isCollected, mountID = C_MountJournal.GetMountInfoByID(data.mountID)
         
         if mountName then
-            -- Get mount rarity and apply appropriate color
             local creatureDisplayID, description, source, isSelfMount, mountTypeID, uiModelSceneID = C_MountJournal.GetMountInfoExtraByID(data.mountID)
             
-            -- Try to get quality from mount data or use sourceType to determine rarity
-            local quality = 4 -- Default to epic (purple) for most raid mounts
-            
-            -- Most raid mounts are epic quality
+            local quality = 4
             if sourceType then
                 if sourceType == 1 then -- Drop
                     quality = 4 -- Epic (purple)
@@ -255,11 +228,9 @@ function RaidMount.UpdateRowContent(row, data)
                 elseif sourceType == 10 then -- In-Game Shop
                     quality = 4 -- Epic (purple)
                 else
-                    quality = 4 -- Default to epic
+                    quality = 4
                 end
             end
-            
-            -- Apply quality colors (same as item quality colors)
             if quality == 0 then
                 nameColor = "|cFF9D9D9D" -- Poor (gray)
             elseif quality == 1 then
@@ -278,9 +249,7 @@ function RaidMount.UpdateRowContent(row, data)
                 nameColor = "|cFF00CCFF" -- Heirloom (light blue)
             end
             
-            -- If mount is not collected, make it slightly dimmer
             if not data.collected then
-                -- Reduce opacity for uncollected mounts
                 if quality == 0 then
                     nameColor = "|cFF6D6D6D" -- Dimmed gray
                 elseif quality == 1 then
@@ -300,12 +269,11 @@ function RaidMount.UpdateRowContent(row, data)
                 end
             end
             
-            -- Add golden glow effect for Collector's Bounty mounts
             if data.collectorsBounty then
                 if data.collected then
-                    nameColor = "|cFFFFE0A0" -- Bright golden for collected Collector's Bounty mounts
+                    nameColor = "|cFFFFE0A0"
                 else
-                    nameColor = "|cFFD4AF37" -- Darker golden for uncollected Collector's Bounty mounts
+                    nameColor = "|cFFD4AF37"
                 end
             end
         end
@@ -352,27 +320,22 @@ function RaidMount.UpdateRowContent(row, data)
     row.texts[6]:SetWidth(columns[7].width)
     row.texts[6]:SetJustifyH("CENTER")
     
-    -- Status - using Blizzard icons instead of emoticons
     if not row.statusIcon then
         row.statusIcon = row:CreateTexture(nil, "OVERLAY")
         row.statusIcon:SetSize(16, 16)
     end
-    row.statusIcon:SetPoint("LEFT", row, "LEFT", columns[8].pos + 17, 0) -- Center the icon in the column
+    row.statusIcon:SetPoint("LEFT", row, "LEFT", columns[8].pos + 17, 0)
     
     if data.collected then
-        -- Green checkmark for collected
         row.statusIcon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
         row.statusIcon:Show()
     else
-        -- Red X for not collected
         row.statusIcon:SetTexture("Interface\\RaidFrame\\ReadyCheck-NotReady")
         row.statusIcon:Show()
     end
     
-    -- Hide the text version of status since we're using icons
     row.texts[7]:SetText("")
     
-    -- Lockout (replacing Last Attempt)
     if not row.lockoutIcon then
         row.lockoutIcon = row:CreateTexture(nil, "OVERLAY")
         row.lockoutIcon:SetSize(14, 14)
@@ -381,27 +344,182 @@ function RaidMount.UpdateRowContent(row, data)
     local hasLockout, timeRemaining = GetLockoutInfo(data)
     
     if hasLockout and timeRemaining then
-        -- Hide the icon when showing timer
         row.lockoutIcon:Hide()
         
-        -- Show time remaining text - centered to match header
         row.texts[8]:SetPoint("LEFT", row, "LEFT", columns[9].pos, 0)
         row.texts[8]:SetText("|cFFFF8000" .. timeRemaining .. "|r")
-        row.texts[8]:SetWidth(columns[9].width)  -- Now width = 100 to match header
-        row.texts[8]:SetJustifyH("CENTER")       -- Center within that width
+        row.texts[8]:SetWidth(columns[9].width)
+        row.texts[8]:SetJustifyH("CENTER")
         row.texts[8]:SetTextColor(1, 0.5, 0, 1)
     else
-        -- No lockout - show green tick centered
         row.lockoutIcon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-        row.lockoutIcon:SetPoint("LEFT", row, "LEFT", columns[9].pos + (columns[9].width / 2) - 8, 0) -- Center the icon
+        row.lockoutIcon:SetPoint("LEFT", row, "LEFT", columns[9].pos + (columns[9].width / 2) - 8, 0)
         row.lockoutIcon:Show()
         
-        -- Clear the text
         row.texts[8]:SetText("")
+    end
+    
+    if not row.mapButton then
+        row.mapButton = CreateFrame("Button", nil, row)
+        row.mapButton:SetSize(40, rowHeight)
+        row.mapButton:SetPoint("LEFT", row, "LEFT", 938, 0)
+        
+        row.mapIcon = row.mapButton:CreateTexture(nil, "OVERLAY")
+        row.mapIcon:SetSize(14, 14)
+        row.mapIcon:SetPoint("CENTER", row.mapButton, "CENTER", 0, 0)
+        row.mapIcon:SetTexture("Interface\\Icons\\INV_Misc_Map_01")
+        
+        row.mapButton:SetScript("OnEnter", function(self)
+            row.mapIcon:SetVertexColor(1, 1, 0, 1)
+            local currentData = row.data
+            if currentData then
+                local coordKey = tonumber(currentData.mountID)
+                local coords = nil
+                if coordKey and RaidMount.Coordinates then
+                    -- Direct lookup by mount ID
+                    coords = RaidMount.Coordinates[coordKey]
+                end
+                
+                if coords then
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    GameTooltip:SetText("Click to open map", 1, 1, 1)
+                    GameTooltip:AddLine(coords.zone or "Unknown Zone", 1, 0.82, 0, 1)
+                    if coords.instance then
+                        GameTooltip:AddLine(coords.instance, 0.8, 0.8, 0.8, 1)
+                    end
+                    -- Show special notes for world bosses
+                    if coords.note then
+                        GameTooltip:AddLine(coords.note, 1, 1, 0, 1)
+                    end
+                    -- Show content type for context
+                    if currentData.contentType then
+                        GameTooltip:AddLine(currentData.contentType, 0.6, 0.6, 1, 1)
+                    end
+                    GameTooltip:Show()
+                end
+            end
+        end)
+        
+        row.mapButton:SetScript("OnLeave", function(self)
+            row.mapIcon:SetVertexColor(1, 1, 1, 1) -- Back to normal
+            GameTooltip:Hide()
+        end)
+        
+        -- Click handler
+        row.mapButton:SetScript("OnClick", function(self)
+            local currentData = row.data -- Get current data from row
+            if currentData then
+                -- Use the mountID as a number for lookup
+                local coordKey = tonumber(currentData.mountID)
+                local coords = nil
+                if coordKey and RaidMount.Coordinates then
+                    -- Direct lookup by mount ID
+                    coords = RaidMount.Coordinates[coordKey]
+                end
+                if coords and coords.zone and coords.x and coords.y then
+                    local waypointSet = false
+                    local mapID = nil
+                    if C_Map and C_Map.GetMapInfo then
+                        for i = 1, 2000 do
+                            local mapInfo = C_Map.GetMapInfo(i)
+                            if mapInfo and mapInfo.name == coords.zone then
+                                mapID = i
+                                break
+                            end
+                        end
+                    end
+                    -- TomTom support (preferred for cross-expansion travel)
+                    if TomTom and TomTom.AddWaypoint and mapID then
+                        -- TomTom can handle cross-continent waypoints better
+                        local success = TomTom:AddWaypoint(mapID, coords.x / 100, coords.y / 100, {
+                            title = string.format("%s (%s)", currentData.mountName or "Mount Location", coords.instance or ""),
+                            persistent = false,
+                            minimap = true,
+                            world = true,
+                            crazy = true  -- Enables cross-continent pathfinding
+                        })
+                        if success then
+                            waypointSet = true
+                            DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CCFFRaidMount:|r TomTom waypoint set for %s at %s (%.1f, %.1f)", 
+                                currentData.mountName or "Mount", coords.zone, coords.x, coords.y))
+                            DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CCFFRaidMount:|r Instance: %s | Expansion: %s", 
+                                coords.instance or "Unknown", currentData.expansion or "Unknown"))
+                            -- Special guidance for world bosses
+                            if currentData.contentType == "World" and coords.note then
+                                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFFFF8000RaidMount:|r %s", coords.note))
+                            end
+                        end
+                    elseif TomTom and TomTom.AddWaypoint and not mapID then
+                        DEFAULT_CHAT_FRAME:AddMessage("|cFFFF0000RaidMount:|r Could not find map ID for zone: " .. tostring(coords.zone))
+                    end
+                    -- Try WoW's built-in waypoint system if TomTom not available or failed
+                    if not waypointSet and C_Map and C_Map.SetUserWaypoint and mapID then
+                        -- Set waypoint using WoW's built-in system
+                        local waypoint = UiMapPoint.CreateFromCoordinates(mapID, coords.x / 100, coords.y / 100)
+                        C_Map.SetUserWaypoint(waypoint)
+                        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+                        waypointSet = true
+                        -- Set the map ID for the waypoint (but don't open the map)
+                        if WorldMapFrame then
+                            WorldMapFrame:SetMapID(mapID)
+                        end
+                        DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CCFFRaidMount:|r Waypoint set for %s at %s (%.1f, %.1f)", 
+                            currentData.mountName or "Mount", coords.zone, coords.x, coords.y))
+                        -- Provide intelligent travel guidance
+                        local currentZone = GetZoneText()
+                        if currentZone and currentZone ~= coords.zone then
+                            local travelGuide = RaidMount.TravelGuides and RaidMount.TravelGuides[coords.zone]
+                            if travelGuide then
+                                -- Determine current expansion context
+                                local routeKey = nil
+                                if string.find(currentZone, "Dornogal") or string.find(currentZone, "Khaz Algar") then
+                                    routeKey = "from_war_within"
+                                elseif string.find(currentZone, "Valdrakken") or string.find(currentZone, "Dragon") then
+                                    routeKey = "from_dragonflight"
+                                elseif string.find(currentZone, "Oribos") or string.find(currentZone, "Shadowlands") then
+                                    routeKey = "from_shadowlands"
+                                end
+                                if routeKey and travelGuide[routeKey] then
+                                    DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF00FF00RaidMount Travel Guide:|r %s", travelGuide[routeKey]))
+                                else
+                                    DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFFFF8000RaidMount:|r Cross-expansion travel: %s → %s (%s)", 
+                                        currentZone, coords.zone, currentData.expansion or "Unknown"))
+                                end
+                            else
+                                DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFFFF8000RaidMount:|r Travel needed: %s → %s (%s)", 
+                                    currentZone, coords.zone, currentData.expansion or "Unknown"))
+                            end
+                        end
+                    end
+                    -- Fallback: Just show location info without opening map
+                    if not waypointSet then
+                        DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFF33CCFFRaidMount:|r %s location: %s (%s) - %.1f, %.1f", 
+                            currentData.mountName or "Mount", coords.zone, coords.instance or "Unknown", coords.x, coords.y))
+                        DEFAULT_CHAT_FRAME:AddMessage(string.format("|cFFFF8000RaidMount:|r Install TomTom addon for better cross-expansion waypoint support"))
+                    end
+                end
+            end
+        end)
+    end
+    
+    if data then
+        local coordKey = tonumber(data.mountID)
+        local coords = nil
+        if coordKey and RaidMount.Coordinates then
+            coords = RaidMount.Coordinates[coordKey]
+        end
+   
+        if coords then
+            row.mapButton:Show()
+            row.mapIcon:SetVertexColor(1, 1, 1, 1)
+        else
+            row.mapButton:Hide()
+        end
+    else
+        row.mapButton:Hide()
     end
 end
 
--- Update visible rows based on scroll position
 local function UpdateVisibleRows()
     if not RaidMount.ScrollFrame or not RaidMount.ScrollFrame.scrollChild then return end
     
@@ -409,20 +527,16 @@ local function UpdateVisibleRows()
     local scrollTop = RaidMount.ScrollFrame:GetVerticalScroll()
     local frameHeight = RaidMount.ScrollFrame:GetHeight()
     
-    -- Calculate which rows should be visible
     local startRow = math.max(1, math.floor(scrollTop / rowHeight) + 1)
     local endRow = math.min(totalRows, startRow + math.ceil(frameHeight / rowHeight) + 1)
     
-    -- Preload textures for upcoming rows
     PreloadUpcomingTextures(startRow, endRow)
     
-    -- Hide all current visible rows
     for _, row in pairs(visibleRows) do
         ReturnRowToPool(row)
     end
     wipe(visibleRows)
     
-    -- Create/show rows for visible range
     for i = startRow, endRow do
         if filteredData[i] then
             local row = GetRowFromPool(scrollChild)
@@ -440,7 +554,6 @@ local function UpdateVisibleRows()
     end
 end
 
--- Update scroll child height based on total rows
 local function UpdateScrollChildHeight()
     if RaidMount.ScrollFrame and RaidMount.ScrollFrame.scrollChild then
         local totalHeight = totalRows * rowHeight
@@ -448,15 +561,79 @@ local function UpdateScrollChildHeight()
     end
 end
 
--- Set filtered data and update display
-function RaidMount.SetFilteredData(data)
-    filteredData = data or {}
-    totalRows = #filteredData
-    UpdateScrollChildHeight()
-    UpdateVisibleRows()
+local function UpdateVisibleRowsOptimized()
+    if not RaidMount.ScrollFrame or not RaidMount.ScrollFrame.scrollChild then return end
+    
+    local scrollChild = RaidMount.ScrollFrame.scrollChild
+    local scrollTop = RaidMount.ScrollFrame:GetVerticalScroll()
+    local frameHeight = RaidMount.ScrollFrame:GetHeight()
+    
+    local startRow = math.max(1, math.floor(scrollTop / rowHeight) + 1)
+    local endRow = math.min(totalRows, startRow + math.ceil(frameHeight / rowHeight) + 1)
+    
+    PreloadUpcomingTextures(startRow, endRow)
+    
+    local newVisibleRows = {}
+    local rowsToReuse = {}
+    
+    for i = startRow, endRow do
+        if filteredData[i] then
+            local existingRow = visibleRows[i]
+            if existingRow then
+                rowsToReuse[i] = existingRow
+                newVisibleRows[i] = existingRow
+            end
+        end
+    end
+    
+    for rowIndex, row in pairs(visibleRows) do
+        if not rowsToReuse[rowIndex] then
+            ReturnRowToPool(row)
+        end
+    end
+    
+    for i = startRow, endRow do
+        if filteredData[i] and not newVisibleRows[i] then
+            local row = GetRowFromPool(scrollChild)
+            row.data = filteredData[i]
+            
+            -- Position the row
+            row:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 0, -(i - 1) * rowHeight)
+            row:SetPoint("TOPRIGHT", scrollChild, "TOPRIGHT", 0, -(i - 1) * rowHeight)
+            
+            -- Update row content
+            RaidMount.UpdateRowContent(row, filteredData[i])
+            
+            newVisibleRows[i] = row
+        end
+    end
+    
+    for i = startRow, endRow do
+        if filteredData[i] and rowsToReuse[i] then
+            local row = rowsToReuse[i]
+            row.data = filteredData[i]
+            RaidMount.UpdateRowContent(row, filteredData[i])
+        end
+    end
+    
+    wipe(visibleRows)
+    for k, v in pairs(newVisibleRows) do
+        visibleRows[k] = v
+    end
 end
 
--- Get visible row count
+function RaidMount.SetFilteredData(data)
+    local oldTotalRows = totalRows
+    filteredData = data or {}
+    totalRows = #filteredData
+    
+    if math.abs(totalRows - oldTotalRows) > 5 then
+        UpdateScrollChildHeight()
+    end
+    
+    UpdateVisibleRowsOptimized()
+end
+
 function RaidMount.GetVisibleRowCount()
     local count = 0
     for _ in pairs(visibleRows) do
@@ -465,7 +642,6 @@ function RaidMount.GetVisibleRowCount()
     return count
 end
 
--- Clear all visible rows
 function RaidMount.ClearVisibleRows()
     for _, row in pairs(visibleRows) do
         ReturnRowToPool(row)
@@ -473,24 +649,23 @@ function RaidMount.ClearVisibleRows()
     wipe(visibleRows)
 end
 
--- Set up scroll frame callbacks
 function RaidMount.SetupScrollFrameCallbacks()
     if RaidMount.ScrollFrame then
         RaidMount.ScrollFrame:SetScript("OnVerticalScroll", function(self, offset)
             self:SetVerticalScroll(offset)
-            UpdateVisibleRows()
+            UpdateVisibleRowsOptimized()
         end)
         
         RaidMount.ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
             local newOffset = self:GetVerticalScroll() - (delta * rowHeight * 3)
             newOffset = math.max(0, math.min(newOffset, (totalRows * rowHeight) - self:GetHeight()))
             self:SetVerticalScroll(newOffset)
-            UpdateVisibleRows()
+            UpdateVisibleRowsOptimized()
         end)
     end
 end
 
--- Export functions
 RaidMount.UpdateVisibleRows = UpdateVisibleRows
+RaidMount.UpdateVisibleRowsOptimized = UpdateVisibleRowsOptimized
 RaidMount.GetRowFromPool = GetRowFromPool
 RaidMount.ReturnRowToPool = ReturnRowToPool
