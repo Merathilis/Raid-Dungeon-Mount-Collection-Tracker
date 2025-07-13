@@ -1,8 +1,8 @@
 ## Title: |cFF33CCFFRaid and|r |cFFFF0000Dungeon Mount Tracker|r
-## Notes: Tracks raid and dungeon mount attempts, collections, and lockouts with modernized UI and enhanced features.
+## Notes: Tracks raid and dungeon mount attempts, collections, and lockouts with modernized UI and enhanced features. Moved Collector's Bounty filter to Content dropdown for better filtering options.
 ## Interface: 110107
 ## Author: knutballs @EU Ravencrest
-## Version: 12.07.25.25
+## Version: 13.07.25.26
 ## SavedVariables: RaidMountAttempts, RaidMountSettings, RaidMountSaved
 
 ## X-Category: Boss Encounters

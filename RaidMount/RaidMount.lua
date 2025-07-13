@@ -9,7 +9,7 @@ end
 
 RaidMountAttempts = RaidMountAttempts or {}
 
-local ADDON_VERSION = "12.07.25.25"
+local ADDON_VERSION = "13.07.25.26"
 PrintAddonMessage("Updated to version " .. ADDON_VERSION)
 
 local function ScanExistingMountCollection()

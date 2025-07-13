@@ -279,7 +279,7 @@ function RaidMount.CreateFilterDropdowns()
     local collectedDropdown = CreateFrame("Frame", "RaidMountCollectedDropdown", filterContainer, "UIDropDownMenuTemplate")
     collectedDropdown:SetPoint("TOPLEFT", 0, row1Y)
     UIDropDownMenu_Initialize(collectedDropdown, function()
-        local options = {"All", "Collected", "Uncollected", "Collector's Bounty"}
+        local options = {"All", "Collected", "Uncollected"}
         for _, option in ipairs(options) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = option
@@ -329,7 +329,7 @@ function RaidMount.CreateFilterDropdowns()
     local contentTypeDropdown = CreateFrame("Frame", "RaidMountContentTypeDropdown", filterContainer, "UIDropDownMenuTemplate")
     contentTypeDropdown:SetPoint("TOPLEFT", 300, row1Y)
     UIDropDownMenu_Initialize(contentTypeDropdown, function()
-        local options = {"All", "Raid", "Dungeon", "World"}
+        local options = {"All", "Raid", "Dungeon", "World", "Collector's Bounty"}
         for _, option in ipairs(options) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = option
@@ -347,12 +347,12 @@ function RaidMount.CreateFilterDropdowns()
     end)
     UIDropDownMenu_SetSelectedName(contentTypeDropdown, "All")
     UIDropDownMenu_SetText(contentTypeDropdown, "All")
-    UIDropDownMenu_SetWidth(contentTypeDropdown, 110)
+    UIDropDownMenu_SetWidth(contentTypeDropdown, 130)
     RaidMount.ContentTypeDropdown = contentTypeDropdown
     
     -- Difficulty filter
     local difficultyDropdown = CreateFrame("Frame", "RaidMountDifficultyDropdown", filterContainer, "UIDropDownMenuTemplate")
-    difficultyDropdown:SetPoint("TOPLEFT", 430, row1Y)
+    difficultyDropdown:SetPoint("TOPLEFT", 450, row1Y)
     UIDropDownMenu_Initialize(difficultyDropdown, function()
         local options = {"All", "Normal", "Heroic", "Mythic", "LFR", "Timewalking"}
         for _, option in ipairs(options) do
@@ -378,7 +378,7 @@ function RaidMount.CreateFilterDropdowns()
     -- Clear All Filters button (positioned next to the dropdowns)
     local clearFiltersButton = CreateFrame("Button", nil, filterContainer, "UIPanelButtonTemplate")
     clearFiltersButton:SetSize(80, 22)
-    clearFiltersButton:SetPoint("TOPLEFT", 580, row1Y - 1)
+    clearFiltersButton:SetPoint("TOPLEFT", 600, row1Y - 1)
     clearFiltersButton:SetText(RaidMount.L("CLEAR_ALL"))
     clearFiltersButton:SetScript("OnClick", function()
         RaidMount.ClearAllFilters()
@@ -442,7 +442,7 @@ function RaidMount.CreateFilterDropdowns()
     contentTypeLabel:SetTextColor(unpack(labelColor))
     
     local difficultyLabel = filterContainer:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    difficultyLabel:SetPoint("TOPLEFT", 470, labelY)
+    difficultyLabel:SetPoint("TOPLEFT", 490, labelY)
     difficultyLabel:SetText("Difficulty")
     difficultyLabel:SetTextColor(unpack(labelColor))
     
@@ -489,10 +489,6 @@ function RaidMount.FilterAndSortMountData(mountData)
             if mount.collected then
                 includeMount = false
             end
-        elseif currentFilter == "Collector's Bounty" then
-            if not mount.collectorsBounty then
-                includeMount = false
-            end
         end
         
         -- Expansion filter
@@ -505,10 +501,16 @@ function RaidMount.FilterAndSortMountData(mountData)
         
         -- Content type filter
         if currentContentTypeFilter ~= "All" then
-            local mountContentType = (mount.contentType or "Unknown"):lower():gsub("%s+", "")
-            local filterContentType = (currentContentTypeFilter or "Unknown"):lower():gsub("%s+", "")
-            if not mountContentType:find(filterContentType, 1, true) then
-                includeMount = false
+            if currentContentTypeFilter == "Collector's Bounty" then
+                if not mount.collectorsBounty then
+                    includeMount = false
+                end
+            else
+                local mountContentType = (mount.contentType or "Unknown"):lower():gsub("%s+", "")
+                local filterContentType = (currentContentTypeFilter or "Unknown"):lower():gsub("%s+", "")
+                if not mountContentType:find(filterContentType, 1, true) then
+                    includeMount = false
+                end
             end
         end
         
