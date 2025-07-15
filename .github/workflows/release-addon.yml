@@ -1,0 +1,33 @@
+name: Release Addon
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger only on version tags like v1.0.0
+
+jobs:
+  build-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Zip addon folder
+        run: |
+          ADDON_NAME=RaidMount
+          mkdir upload
+          cp -r $ADDON_NAME upload/
+          cd upload
+          zip -r "${ADDON_NAME}.zip" "$ADDON_NAME"
+          mv "${ADDON_NAME}.zip" ../
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: RaidMount.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
