@@ -29,7 +29,6 @@ jobs:
           curseforge-loaders: |
             - wow_retail
           curseforge-game-versions: |
-            - 11200  # Placeholder for 11.2.0
-            - 11107  # Placeholder for 11.1.7
+            - 100106
           curseforge-changelog: ${{ github.event.release.body }}
           curseforge-game-version-filter: any
