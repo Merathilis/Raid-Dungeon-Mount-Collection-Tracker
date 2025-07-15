@@ -18,7 +18,7 @@ jobs:
       - name: Fetch latest Retail game version ID
         id: get-retail-id
         run: |
-          curl -s https://wow.curseforge.com/api/game/versions | \
+          curl -s -H "x-api-key: ${{ secrets.CF_API_KEY }}" https://wow.curseforge.com/api/game/versions | \
             jq '[.[] | select(.flavor=="wow_retail" and (.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")))][-1].id' > retail_id.txt
           echo "RETAIL_ID=$(cat retail_id.txt)" >> $GITHUB_ENV
 
