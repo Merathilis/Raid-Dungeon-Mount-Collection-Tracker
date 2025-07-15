@@ -1,4 +1,4 @@
-name: Release WoW Addon
+name: Full Addon Release
 
 on:
   release:
@@ -11,24 +11,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Zip addon folder
-        run: |
-          mkdir -p build
-          cd RaidMount
-          zip -r ../build/RaidMount.zip .
-          cd ..
-
-      - name: Upload to CurseForge
-        uses: Kir-Antipov/mc-publish@v3
         with:
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          curseforge-id: 1204427
-          curseforge-files: |
-            build/RaidMount.zip
-          curseforge-loaders: |
-            - wow_retail
-          curseforge-game-versions: |
-            - 100106
-          curseforge-changelog: ${{ github.event.release.body }}
-          curseforge-game-version-filter: any
+          fetch-depth: 0
+
+      - name: Run BigWigs Packager
+        uses: BigWigsMods/packager@v2
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
