@@ -17,4 +17,4 @@ manual-changelog:
 
 curseforge:
   id: 1204427
-  game-versions: []   # or leave blank, the workflow will insert the correct ID list
+  game-versions: []
