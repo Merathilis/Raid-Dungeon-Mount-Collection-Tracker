@@ -1,12 +1,14 @@
 name: Test CurseForge API
 
-on: [workflow_dispatch]
+on: 
+  workflow_dispatch:
 
 jobs:
   test-api:
     runs-on: ubuntu-latest
+
     steps:
       - name: Debug CurseForge API response
         run: |
-          curl -s -H "x-api-key: ${{ secrets.CURSEFORGE_TOKEN }}" https://wow.curseforge.com/api/game/versions | tee response.json
+          curl -s -H "X-Api-Token: ${{ secrets.CURSEFORGE_TOKEN }}" https://wow.curseforge.com/api/game/versions | tee response.json
           head -30 response.json
