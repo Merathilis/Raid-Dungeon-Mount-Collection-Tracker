@@ -1,0 +1,17 @@
+package-as: RaidMount  # Folder name to package
+
+ignore:
+  - .github
+  - README.md
+  - .gitignore
+
+curseforge:
+  id: 1204427
+  game-version:
+    - 100106
+
+wago:
+  # Add if you want to specify project IDs here
+
+wowi:
+  # Add your WoWInterface addon ID here if you want
