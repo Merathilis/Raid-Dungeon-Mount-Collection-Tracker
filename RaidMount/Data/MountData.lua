@@ -5,7 +5,7 @@ RaidMount.mountInstances = {
       
     -- Classic WoW Raids
     { mountName = "Red Qiraji Resonating Crystal", MountID = 26, spellID = 26054, raidName = "Temple of Ahn'Qiraj", expansion = "Classic", bossName = "Trash Mobs", dropRate = "~1%", difficulty = "Normal", location = "Silithus", description = "A rare crystalline formation that resonates with the ancient magic of the Qiraji empire.", contentType = "Raid", collectorsBounty = true },
-    { mountName = "Onyxian Drake", MountID = 349, spellID = 69395, raidName = "Onyxia's Lair", expansion = "Classic", bossName = "Onyxia", dropRate = "~1%", difficulty = "Normal", location = "Dustwallow Marsh", statisticIds = { 1098 }, contentType = "Raid", collectorsBounty = true },
+    { mountName = "Onyxian Drake", MountID = 349, spellID = 69395, raidName = "Onyxia's Lair", expansion = "Wrath of the Lich King", bossName = "Onyxia", dropRate = "~1%", difficulty = "Normal", location = "Dustwallow Marsh", statisticIds = { 1098 }, contentType = "Raid", collectorsBounty = true },
     { mountName = "Fiery Warhorse", MountID = 168, spellID = 36702, raidName = "Karazhan", expansion = "The Burning Crusade", bossName = "Attumen the Huntsman", dropRate = "~1%", difficulty = "Normal", location = "Deadwind Pass", description = "Was one of the most vicious steeds stabled in Karazhan.", statisticIds = { 1088 }, contentType = "Raid", collectorsBounty = true },
     { mountName = "Ashes of Al'ar", MountID = 183, spellID = 40192, raidName = "Tempest Keep", expansion = "The Burning Crusade", bossName = "Kael'thas Sunstrider", dropRate = "~1%", difficulty = "Normal", location = "Netherstorm", description = "Al'ar was the beloved pet of Kael'thas Sunstrider, who often boasted that death would never claim it. Perhaps he was right.", statisticIds = { 1088 }, contentType = "Raid", collectorsBounty = true },
     
@@ -45,7 +45,7 @@ RaidMount.mountInstances = {
     { mountName = "Shackled Ur'zul", MountID = 954, spellID = 243651, raidName = "Antorus, the Burning Throne", expansion = "Legion", bossName = "Argus the Unmaker", dropRate = "~1%", difficulty = "Mythic", location = "Antoran Wastes", description = "Formed from the tormented bodies and souls of fallen members of the Army of the Light, the Ur'zul is both fascinating and horrifying.", contentType = "Raid", collectorsBounty = true },
     
     -- Battle for Azeroth Raids
-    { mountName = "G.M.O.D.", MountID = 1217, spellID = 289083, raidName = "Battle of Dazar'alor", expansion = "Battle for Azeroth", bossName = "High Tinker Mekkatorque", dropRate = "~1%", difficulty = "Normal", location = "Dazar'alor", description = "The Gallywix Mecha of Death is a marvel of goblin engineering, and a testament to the power of greed.", statisticIds = { 13317, 13318 }, contentType = "Raid", collectorsBounty = true, bossNameByDifficulty = { LFR = "Lady Jaina Proudmoore", Normal = "High Tinker Mekkatorque", Heroic = "High Tinker Mekkatorque", Mythic = "High Tinker Mekkatorque" }, statisticIdsByDifficulty = { LFR = { 13319, 13320 }, Normal = { 13317, 13318 }, Heroic = { 13317, 13318 }, Mythic = { 13317, 13318 } } },
+    { mountName = "G.M.O.D.", MountID = 1217, spellID = 289083, raidName = "Battle of Dazar'alor", expansion = "Battle for Azeroth", bossName = "High Tinker Mekkatorque", dropRate = "~1%", difficulty = "Normal", location = "Dazar'alor", description = "The Gallywix Mecha of Death is a marvel of goblin engineering, and a testament to the power of greed.", statisticIds = { 13317, 13318 }, contentType = "Raid", collectorsBounty = true, bossNameByDifficulty = { LFR = "Lady Jaina Proudmoore", Normal = "Mekkatorque", Heroic = "Mekkatorque", Mythic = "Mekkatorque" }, statisticIdsByDifficulty = { LFR = { 13319, 13320 }, Normal = { 13317, 13318 }, Heroic = { 13317, 13318 }, Mythic = { 13317, 13318 } } },
     { mountName = "Glacial Tidestorm", MountID = 1219, spellID = 289555, raidName = "Battle of Dazar'alor", expansion = "Battle for Azeroth", bossName = "Lady Jaina Proudmoore", dropRate = "~1%", difficulty = "Mythic", location = "Dazar'alor", description = "A manifestation of Jaina's mastery over frost magic, this elemental mount is as beautiful as it is deadly.", statisticIds = { 13319, 13320 }, contentType = "Raid", collectorsBounty = true },
     { mountName = "Surf Jelly", MountID = 1169, spellID = 278979, raidName = "The Eternal Palace", expansion = "Battle for Azeroth", bossName = "Lady Ashvane", dropRate = "~1%", difficulty = "Mythic", location = "Nazjatar", description = "The time between being stung and being enveloped and devoured is short enough to consider not swimming in the Great Sea.", statisticIds = { 13600, 13601, 13602, 13603 }, contentType = "Raid" },
     { mountName = "Silent Glider", MountID = 1257, spellID = 300149, raidName = "Ny'alotha, the Waking City", expansion = "Battle for Azeroth", bossName = "Il'gynoth", dropRate = "~1%", difficulty = "Mythic", location = "Uldum/Vale of Eternal Blossoms", description = "A rare sight. Most disappeared once Baron Rivendare ruled in Stratholme.", contentType = "Raid" },
@@ -61,13 +61,16 @@ RaidMount.mountInstances = {
     { mountName = "Anu'relos, Flame's Guidance", MountID = 1818, spellID = 424484, raidName = "Amirdrassil, the Dream's Hope", expansion = "Dragonflight", bossName = "Fyrakk", dropRate = "~1%", difficulty = "Mythic", location = "Emerald Dream", description = "A mount born from the flames of Fyrakk's corruption, yet somehow still burning with hope for redemption.", contentType = "Raid" },
     
     -- The War Within Raids
+    { mountName = "Ascendant Skyrazor", MountID = 2223, spellID = 451491, raidName = "Nerub-ar Palace", expansion = "The War Within", bossName = "Queen Ansurek", dropRate = "~1%", difficulty = "Mythic", location = "Azj-Kahet", description = "Intended for the most devoted of the Sureki elite, these skyrazors were favored by Queen Ansurek for both their cunning and brutality.", contentType = "Raid" },
     { mountName = "Sureki Skyrazor", MountID = 2219, spellID = 451486, raidName = "Nerub-ar Palace", expansion = "The War Within", bossName = "Queen Ansurek", dropRate = "~1%", difficulty = "Normal", location = "Azj-Kahet", description = "A terrifying nerubian mount that patrols the darkest depths of Azj-Kahet.", statisticIds = { 40295, 40296, 40297, 40298 }, contentType = "Raid" },
     { mountName = "Prototype A.S.M.R.", MountID = 2507, spellID = 1221155, raidName = "Liberation of Undermine", expansion = "The War Within", bossName = "Chrome King Gallywix", dropRate = "~1%", difficulty = "Mythic", location = "Undermine", description = "An experimental goblin engineering marvel that defies both logic and safety regulations.", contentType = "Raid" },
     { mountName = "The Big G", MountID = 2487, spellID = 1217760, raidName = "Liberation of Undermine", expansion = "The War Within", bossName = "Chrome King Gallywix", dropRate = "~1%", difficulty = "Mythic", location = "Undermine", description = "Doesn't actually seem like anything too special under the hood, but just wait until those goblins next door see you pull up for the next pool party.", contentType = "Raid" },
-
-   
+    { mountName = "Sthaarbs's Last Lunch", MountID = 2603, spellID = 1241076, raidName = "K'aresh", expansion = "The War Within", bossName = "Sthaarbs", dropRate = "~1%", difficulty = "Mythic", location = "K'aresh", description = "When one cosmically invasive threat meets another, sometimes the smaller will end up on the menu of the larger. At least cosmic observers don't always chew their meals.", contentType = "Raid" },
+    { mountName = "Unbound Star-Eater", MountID = 2569, spellID = 1234573, raidName = "Manaforge Omega", expansion = "The War Within", bossName = "Dimensius, the All-Devouring", dropRate = "~1%", difficulty = "Mythic", location = "K'aresh", description = "In the void-scarred wake of the All-Devouring and his kith, twisted remnants of distant worlds and forgotten aeons find their way across the Great Dark.", contentType = "Raid" },
+    
     -- Classic Dungeons
-    { mountName = "Rivendare's Deathcharger", MountID = 69, spellID = 17481, raidName = "Stratholme", expansion = "Classic", bossName = "Baron Rivendare", dropRate = "~1%", difficulty = "Normal", location = "Eastern Plaguelands", description = "When Baron Rivendare became a champion of the Scourge, he condemned his favorite horse to join him in undeath.", contentType = "Dungeon", collectorsBounty = "Drop rate not increased in Timewalking" },
+    
+    { mountName = "Rivendare's Deathcharger", MountID = 69, spellID = 17481, raidName = "Stratholme", expansion = "Classic", bossName = "Lord Aurius Rivendare", dropRate = "~1%", difficulty = "Normal", location = "Eastern Plaguelands", description = "When Baron Rivendare became a champion of the Scourge, he condemned his favorite horse to join him in undeath.", contentType = "Dungeon", collectorsBounty = "Drop rate not increased in Timewalking" },
     
     
     -- The Burning Crusade Dungeons
@@ -81,7 +84,7 @@ RaidMount.mountInstances = {
     -- Cataclysm Dungeons
     { mountName = "Vitreous Stone Drake", MountID = 397, spellID = 88746, raidName = "The Stonecore", expansion = "Cataclysm", bossName = "Slabhide", dropRate = "~1%", difficulty = "Heroic", location = "Deepholm", description = "Those would be perfect in a pendant, and that would make a fantastic ring. Let me know if this thing sheds or molts or whatever. -Kalinda", contentType = "Dungeon", collectorsBounty = "Drop rate not increased in Timewalking" },
     { mountName = "Drake of the North Wind", MountID = 395, spellID = 88742, raidName = "The Vortex Pinnacle", expansion = "Cataclysm", bossName = "Altairus", dropRate = "~1%", difficulty = "Heroic", location = "Uldum", description = "They sicken of the calm who know the storm.", contentType = "Dungeon", collectorsBounty = "Drop rate not increased in Timewalking" },
-    { mountName = "Grey Riding Camel", MountID = 400, spellID = 88750, raidName = "Feralas", expansion = "Cataclysm", bossName = "Dormus the Camel-Hoarder", dropRate = "~1%", difficulty = "World", location = "Feralas", description = "Fennimore Quigley is credited with milking the first camel and breaking the record for \"longest unintentional flight,\" all in the same afternoon.", contentType = "Dungeon" },
+    { mountName = "Grey Riding Camel", MountID = 400, spellID = 88750, raidName = "Feralas", expansion = "Cataclysm", bossName = "Dormus the Camel-Hoarder", dropRate = "~1%", difficulty = "World", location = "Feralas", description = "Fennimore Quigley is credited with milking the first camel and breaking the record for \"longest unintentional flight,\" all in the same afternoon.", contentType = "World" },
     { mountName = "Armored Razzashi Raptor", MountID = 410, spellID = 96491, raidName = "Zul'Gurub", expansion = "Cataclysm", bossName = "Bloodlord Mandokir", dropRate = "~1%", difficulty = "Heroic", location = "Stranglethorn Vale", description = "The purebred royal raptors of Zul'Gurub, these mounts have become a rare sight in Stranglethorn Vale.", contentType = "Dungeon", collectorsBounty = true },
     { mountName = "Swift Zulian Panther", MountID = 411, spellID = 96499, raidName = "Zul'Gurub", expansion = "Cataclysm", bossName = "High Priestess Kilnara", dropRate = "~1%", difficulty = "Heroic", location = "Stranglethorn Vale", description = "The jungle trolls have long coveted panther fangs, using them for rituals or as ingredients in mojos.", contentType = "Dungeon", collectorsBounty = true },
     { mountName = "Amani Battle Bear", MountID = 419, spellID = 98204, raidName = "Zul'Aman", expansion = "Cataclysm", bossName = "Timed Run Reward", dropRate = "100%", difficulty = "Heroic", location = "Ghostlands", description = "The Amani trolls decorate these ferocious mounts in magic amulets and ceremonial masks as a way to venerate the bear god Nalorakk.", contentType = "Dungeon" },
@@ -89,7 +92,7 @@ RaidMount.mountInstances = {
     -- Legion Dungeons
     { mountName = "Midnight", MountID = 875, spellID = 229499, raidName = "Return to Karazhan", expansion = "Legion", bossName = "Attumen the Huntsman", dropRate = "~1%", difficulty = "Mythic", location = "Deadwind Pass", description = "Still one of the most vicious steeds stabled in Karazhan.", contentType = "Dungeon", collectorsBounty = true },
     { mountName = "Smoldering Ember Wyrm", MountID = 883, spellID = 231428, raidName = "Return to Karazhan", expansion = "Legion", bossName = "Nightbane", dropRate = "~1%", difficulty = "Mythic", location = "Deadwind Pass", description = "A dragon of pure ember and ash, born from the depths of Karazhan's darkest corners.", contentType = "Dungeon" },
-    { mountName = "Vile Fiend", MountID = 955, spellID = 243652, raidName = "Antorus, the Burning Throne", expansion = "Legion", bossName = "Houndmaster Kerrax", dropRate = "~1%", difficulty = "Mythic", location = "Antoran Wastes", description = "Infused with acidic blood through a terrifying ritual, you can feel your control over this beast is tenuous at best.", statisticIds = { 11960, 11961, 11962, 12119 }, contentType = "Dungeon" },
+    { mountName = "Vile Fiend", MountID = 955, spellID = 243652, raidName = "Antorus, the Burning Throne", expansion = "Legion", bossName = "Houndmaster Kerrax", dropRate = "~1%", difficulty = "Mythic", location = "Antoran Wastes", description = "Infused with acidic blood through a terrifying ritual, you can feel your control over this beast is tenuous at best.", statisticIds = { 11960, 11961, 11962, 12119 }, contentType = "Raid" },
     
     -- Battle for Azeroth Dungeons
     { mountName = "Aerial Unit R-21/X", MountID = 1227, spellID = 290718, raidName = "Operation: Mechagon", expansion = "Battle for Azeroth", bossName = "King Mechagon", dropRate = "~1%", difficulty = "Mythic", location = "Mechagon", description = "A flying machine of goblin engineering, designed for aerial combat and transportation.", contentType = "Dungeon" },
@@ -107,18 +110,16 @@ RaidMount.mountInstances = {
     { mountName = "Volcanic Stone Drake", MountID = 198825, spellID = 88331, raidName = "Neltharus", expansion = "Dragonflight", bossName = "Magmatusk", dropRate = "~1%", difficulty = "Mythic", location = "Thaldraszus", description = "A drake forged from volcanic stone, its scales glow with the heat of molten lava.", contentType = "Dungeon" },
     { mountName = "Liberated Slyvern", MountID = 192799, spellID = 359622, raidName = "The Nokhud Offensive", expansion = "Dragonflight", bossName = "Teera and Maruuk", dropRate = "~1%", difficulty = "Mythic", location = "Ohn'ahran Plains", description = "A slyvern freed from the control of the Nokhud clan, now serving as a loyal mount.", contentType = "Dungeon" },
     { mountName = "Wick", MountID = 2204, spellID = 449264, raidName = "Darkflame Cleft", expansion = "Dragonflight", bossName = "The Darkness", dropRate = "~1%", difficulty = "Mythic", location = "Zaralek Cavern", description = "Rescued from the ruthless charge of Ol' Waxbeard and the looming threat of The Darkness, now able to nibble on loose wax in peace.", contentType = "Dungeon" },
-    { mountName = "Ascendant Skyrazor", MountID = 2223, spellID = 451491, raidName = "Nerub-ar Palace", expansion = "The War Within", bossName = "Queen Ansurek", dropRate = "~1%", difficulty = "Mythic", location = "Azj-Kahet", description = "Intended for the most devoted of the Sureki elite, these skyrazors were favored by Queen Ansurek for both their cunning and brutality.", contentType = "Dungeon" },
-    { mountName = "Unbound Star-Eater", MountID = 2569, spellID = 1234573, raidName = "Manaforge Omega", expansion = "Dragonflight", bossName = "Dimensius, the All-Devouring", dropRate = "~1%", difficulty = "Mythic", location = "K'aresh", description = "In the void-scarred wake of the All-Devouring and his kith, twisted remnants of distant worlds and forgotten aeons find their way across the Great Dark.", contentType = "Dungeon" },
+    
     
     -- The War Within Dungeons
     { mountName = "Stonevault Mechsuit", MountID = 2119, spellID = 442358, raidName = "The Stonevault", expansion = "The War Within", bossName = "Quest: Repurposed, Restored", dropRate = "100%", difficulty = "Quest", location = "The Ringing Deeps", description = "Metal once ruined, restored to life by scrap and song.", contentType = "Special" },
-    
+    { mountName = "Translocated Gorger", MountID = 2602, spellID = 1241070, raidName = "Tazavesh", expansion = "The War Within", bossName = "Devourer Swarms", dropRate = "~1%", difficulty = "Mythic", location = "Tazavesh", description = "Accidentally transported when the Brokers moved Tazavesh, this gorger has found a new world ripe with potential sources of energy, such as anima beacons...and riders.", contentType = "Dungeon" },
     -- ======================================
     -- WORLD BOSS DROPS
     -- ======================================
     
     -- Wrath of the Lich King World Drops
-    { mountName = "White Polar Bear", MountID = 237, spellID = 54753, raidName = "Daily Dungeon", expansion = "Wrath of the Lich King", bossName = "Daily Dungeon Reward", dropRate = "~1%", difficulty = "Normal", location = "Various", contentType = "World" },
     { mountName = "Time-Lost Proto-Drake", MountID = 44168, spellID = 60002, raidName = "World Spawn", expansion = "Wrath of the Lich King", bossName = "Time-Lost Proto-Drake", dropRate = "100%", difficulty = "World", location = "The Storm Peaks", contentType = "World" },
     
     -- Cataclysm World Bosses
@@ -141,7 +142,11 @@ RaidMount.mountInstances = {
     { mountName = "Illidari Doomhawk", MountID = 293, spellID = 62048, raidName = "Tanaris", expansion = "Cataclysm", bossName = "Doomwalker", dropRate = "~1%", difficulty = "World", location = "Tanaris", description = "Once a year, a rift in time appears, and strange things occur. The Illidari scouts and Doomwalker were quite surprised to find themselves in Tanaris.", contentType = "World" },
     
     -- Special/Other
-    { mountName = "Infinite Timereaver", MountID = 781, spellID = 201098, raidName = "Timewalking Dungeons", expansion = "Warlords of Draenor", bossName = "Any Timewalking Boss", dropRate = "~0.01%", difficulty = "Timewalking", location = "Various", contentType = "Special" },
+    { mountName = "Infinite Timereaver", MountID = 781, spellID = 201098, raidName = "Timewalking Dungeons", expansion = "Legion", bossName = "Any Timewalking Boss", dropRate = "~0.01%", difficulty = "Timewalking", location = "Various", contentType = "Special" },
+    
+    -- The War Within World Drops
+    { mountName = "Pearlescent Krolusk", MountID = 2601, spellID = 1240632, raidName = "K'aresh", expansion = "The War Within", bossName = "Urmag", dropRate = "~1%", difficulty = "World", location = "K'aresh", description = "Introduced as an invasive species to K'aresh, Krolusk have found some use as beasts of burden.", contentType = "World" },
+    { mountName = "Curious Slateback", MountID = 2561, spellID = 1233561, raidName = "K'aresh", expansion = "The War Within", bossName = "Vibrating Box", dropRate = "~1%", difficulty = "World", location = "K'aresh", description = "This curious slateback somehow managed to get itself stuck in a box. How it fit inside is still up in the air.", contentType = "World" },
     
     -- ======================================
     -- HOLIDAY/EVENT BOSS DROPS
@@ -153,6 +158,7 @@ RaidMount.mountInstances = {
     -- Brewfest Event
     { mountName = "Swift Brewfest Ram", MountID = 202, spellID = 43900, raidName = "Brewfest", expansion = "Holiday Event", bossName = "Coren Direbrew", dropRate = "~3%", difficulty = "Holiday", location = "Blackrock Depths", description = "Dwarves attribute this breed's even temperament to rigorous training, but other races argue that a daily diet of strong ale has something to do with it.", contentType = "Holiday" },
     { mountName = "Great Brewfest Kodo", MountID = 226, spellID = 49379, raidName = "Brewfest", expansion = "Holiday Event", bossName = "Coren Direbrew", dropRate = "~3%", difficulty = "Holiday", location = "Blackrock Depths", description = "Coren Direbrew won this prize after drinking a Tauren druid under the table - and the druid was in bear form.", contentType = "Holiday" },
+    { mountName = "Brewfest Barrel Bomber", MountID = 2640, spellID = 1247662, raidName = "Brewfest", expansion = "Holiday Event", bossName = "Coren Direbrew", dropRate = "~1%", difficulty = "Holiday", location = "Blackrock Depths", description = "Careful not to consume the ammunition.", contentType = "Holiday" },
     
     -- Love is in the Air Event
      
@@ -161,7 +167,7 @@ RaidMount.mountInstances = {
     
     -- Dragonflight World/Achievement Mounts
     { mountName = "Winter Night Dreamsaber", MountID = 1815, spellID = 424476, raidName = "Dreamseed Cache", expansion = "Dragonflight", bossName = "Dreamseed Cache", dropRate = "~1%", difficulty = "World", location = "Emerald Dream", description = "These nocturnal dreamsabers carry the chill of winter with them and will often hibernate for days on end if not otherwise awoken.", contentType = "World" }
-}
+}  
 
 local mountLookupByID = {}
 local mountLookupBySpellID = {}

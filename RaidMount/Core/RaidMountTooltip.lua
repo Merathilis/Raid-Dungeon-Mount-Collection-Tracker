@@ -252,36 +252,48 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
             
             local characterAttempts = {}
             local lockedOutCount = 0
-            local currentTime = time()
-            local currentDate = date("*t", currentTime)
-            local daysUntilTuesday = (3 - currentDate.wday + 7) % 7
-            if daysUntilTuesday == 0 and currentDate.hour < 9 then daysUntilTuesday = 0 elseif daysUntilTuesday == 0 then daysUntilTuesday = 7 end
-            local nextResetTime = time({year = currentDate.year, month = currentDate.month, day = currentDate.day + daysUntilTuesday, hour = 9, min = 0, sec = 0})
-            local lastResetTime = nextResetTime - (7 * 24 * 60 * 60)
-            for charName, count in pairs(attemptData.characters) do
-                if type(count) == "number" and count > 0 and attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] then
-                    local lastAttemptDate = attemptData.lastAttemptDates[charName]
-                    local day, month, year = lastAttemptDate:match("(%d+)/(%d+)/(%d+)")
-                    if day and month and year then
-                        year = tonumber(year)
-                        if year < 50 then year = year + 2000 else year = year + 1900 end
-                        local lastAttemptTime = time({year = year, month = tonumber(month), day = tonumber(day), hour = 0, min = 0, sec = 0})
-                        if lastAttemptTime > lastResetTime then
+            
+            -- Check current character's lockout first
+            local currentCharName = UnitName("player")
+            local currentCharRealm = GetRealmName()
+            local currentCharKey = currentCharName .. "-" .. currentCharRealm
+            
+            -- Check if current character is locked out
+            local currentLockout = RaidMount.GetRaidLockout(mount.raidName)
+            if currentLockout and currentLockout ~= "No lockout" then
+                local shortName = currentCharName:match("([^%-]+)") or currentCharName
+                table.insert(characterAttempts, {name = shortName})
+                lockedOutCount = lockedOutCount + 1
+            end
+            
+            -- Check other characters from saved data
+            for charName, charData in pairs(attemptData.characters) do
+                local count = 0
+                if type(charData) == "number" then
+                    -- Old format migration
+                    count = charData
+                elseif type(charData) == "table" and charData.count then
+                    -- New format
+                    count = charData.count
+                end
+                
+                if count > 0 then
                     local shortName = charName:match("([^%-]+)") or charName
-                    table.insert(characterAttempts, {name = shortName, count = count})
-                            lockedOutCount = lockedOutCount + 1
-                        end
+                    -- Don't add current character twice
+                    if shortName ~= currentCharName then
+                        table.insert(characterAttempts, {name = shortName})
+                        lockedOutCount = lockedOutCount + 1
                     end
                 end
             end
-            table.sort(characterAttempts, function(a, b) return a.count > b.count end)
+            table.sort(characterAttempts, function(a, b) return a.name < b.name end)
             if lockedOutCount > 0 then
                 for i = 1, math.min(8, #characterAttempts) do
                 local char = characterAttempts[i]
-                    GameTooltip:AddLine("  |cFFFF3333" .. char.name .. "|r: " .. tostring(char.count), 1, 0.2, 0.2)
+                    GameTooltip:AddLine("  |cFFFF3333" .. char.name .. "|r: (locked out)", 1, 0.2, 0.2)
                 table.insert(tooltipData, {
                         type = "text",
-                        text = "  " .. char.name .. ": " .. tostring(char.count),
+                        text = "  " .. char.name .. ": (locked out)",
                         color = {1, 0.2, 0.2}
                 })
             end

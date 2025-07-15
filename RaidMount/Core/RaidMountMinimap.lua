@@ -14,7 +14,9 @@ dragAngle = RaidMountSettings.minimap.angle or 0
 
 local function UpdateButtonPosition()
     local angle = dragAngle or 0
-    local radius = 80
+    local minimapWidth = Minimap:GetWidth() / 2
+    local minimapHeight = Minimap:GetHeight() / 2
+    local radius = math.min(minimapWidth, minimapHeight) - 5 -- 5px padding from edge
     local x = math.cos(math.rad(angle)) * radius
     local y = math.sin(math.rad(angle)) * radius
     minimapButton:SetPoint("CENTER", Minimap, "CENTER", x, y)
@@ -62,25 +64,25 @@ function RaidMount.CreateMinimapButton()
     minimapButton:RegisterForDrag("LeftButton")
     minimapButton:SetClampedToScreen(true)
 
-    -- Black circular background
-    local bg = minimapButton:CreateTexture(nil, "BACKGROUND")
-    bg:SetTexture("Interface\\AddOns\\RaidMount\\UI\\white_circle.tga")
-    bg:SetAllPoints()
-    bg:SetVertexColor(0, 0, 0, 1)
+    -- (No border, no background)
 
-    -- Blue 'R'
+    -- Larger blue 'R' with shadow
     local rText = minimapButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    rText:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
+    rText:SetFont("Fonts\\FRIZQT__.TTF", 17, "OUTLINE")
     rText:SetText("R")
-    rText:SetTextColor(0.2, 0.5, 1, 1)
+    rText:SetTextColor(0.1, 0.6, 1, 1)
     rText:SetPoint("LEFT", minimapButton, "LEFT", 7, 0)
+    rText:SetShadowColor(0, 0, 0, 0.8)
+    rText:SetShadowOffset(1, -1)
 
-    -- Red 'M'
+    -- Slightly smaller red 'M' with shadow, right next to 'R'
     local mText = minimapButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    mText:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
+    mText:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
     mText:SetText("M")
-    mText:SetTextColor(1, 0.2, 0.2, 1)
-    mText:SetPoint("RIGHT", minimapButton, "RIGHT", -7, 0)
+    mText:SetTextColor(1, 0.1, 0.1, 1)
+    mText:SetPoint("LEFT", rText, "RIGHT", -5, -1)
+    mText:SetShadowColor(0, 0, 0, 0.8)
+    mText:SetShadowOffset(1, -1)
 
     minimapButton:SetScript("OnDragStart", OnDragStart)
     minimapButton:SetScript("OnDragStop", OnDragStop)

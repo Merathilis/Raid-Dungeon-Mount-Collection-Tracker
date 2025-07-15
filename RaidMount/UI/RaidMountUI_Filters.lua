@@ -183,7 +183,7 @@ end
 function RaidMount.ClearAllFilters()
     -- Reset all filter variables
     RaidMount.currentFilter = "All"
-    RaidMount.currentExpansionFilter = "All"
+    RaidMount.currentExpansionFilters = {}
     RaidMount.currentContentTypeFilter = "All"
     RaidMount.currentDifficultyFilter = "All"
     RaidMount.currentSearch = ""
@@ -229,8 +229,12 @@ function RaidMount.UpdateFilterStatusDisplay()
         table.insert(activeFilters, RaidMount.currentFilter)
     end
     
-    if RaidMount.currentExpansionFilter ~= "All" then
-        table.insert(activeFilters, RaidMount.currentExpansionFilter)
+    if RaidMount.currentExpansionFilters and next(RaidMount.currentExpansionFilters) then
+        local expansionList = {}
+        for expansion in pairs(RaidMount.currentExpansionFilters) do
+            table.insert(expansionList, expansion)
+        end
+        table.insert(activeFilters, "Expansions: " .. table.concat(expansionList, ", "))
     end
     
     if RaidMount.currentContentTypeFilter ~= "All" then
@@ -300,23 +304,70 @@ function RaidMount.CreateFilterDropdowns()
     UIDropDownMenu_SetWidth(collectedDropdown, 120)
     RaidMount.CollectedDropdown = collectedDropdown
     
-    -- Expansion filter
+    -- Expansion filter - REPLACED WITH MULTI-SELECT
     local expansionDropdown = CreateFrame("Frame", "RaidMountExpansionDropdown", filterContainer, "UIDropDownMenuTemplate")
     expansionDropdown:SetPoint("TOPLEFT", 140, row1Y)
     UIDropDownMenu_Initialize(expansionDropdown, function()
-        local options = {"All", "Classic", "The Burning Crusade", "Wrath of the Lich King", "Cataclysm", "Mists of Pandaria", "Warlords of Draenor", "Legion", "Battle for Azeroth", "Shadowlands", "Dragonflight", "The War Within", "Holiday Event"}
-        for _, option in ipairs(options) do
+        local expansions = {
+            "All", "Classic", "The Burning Crusade", "Wrath of the Lich King", 
+            "Cataclysm", "Mists of Pandaria", "Warlords of Draenor", "Legion", 
+            "Battle for Azeroth", "Shadowlands", "Dragonflight", "The War Within", "Holiday Event"
+        }
+        
+        for _, expansion in ipairs(expansions) do
             local info = UIDropDownMenu_CreateInfo()
-            info.text = option
+            info.text = expansion
             info.func = function()
-                UIDropDownMenu_SetSelectedName(expansionDropdown, option)
-                UIDropDownMenu_SetText(expansionDropdown, option)
-                RaidMount.currentExpansionFilter = option
+                -- Toggle expansion in filter list
+                RaidMount.currentExpansionFilters = RaidMount.currentExpansionFilters or {}
+                
+                if expansion == "All" then
+                    -- Clear all filters
+                    wipe(RaidMount.currentExpansionFilters)
+                    UIDropDownMenu_SetText(expansionDropdown, "All")
+                else
+                    -- Toggle specific expansion
+                    if RaidMount.currentExpansionFilters[expansion] then
+                        RaidMount.currentExpansionFilters[expansion] = nil
+                    else
+                        RaidMount.currentExpansionFilters[expansion] = true
+                    end
+                    
+                    -- Update dropdown text
+                    local selectedCount = 0
+                    for _ in pairs(RaidMount.currentExpansionFilters) do
+                        selectedCount = selectedCount + 1
+                    end
+                    
+                    if selectedCount == 0 then
+                        UIDropDownMenu_SetText(expansionDropdown, "All")
+                    elseif selectedCount == 1 then
+                        for exp in pairs(RaidMount.currentExpansionFilters) do
+                            UIDropDownMenu_SetText(expansionDropdown, exp)
+                            break
+                        end
+                    else
+                        UIDropDownMenu_SetText(expansionDropdown, selectedCount .. " selected")
+                    end
+                end
+                
                 if not RaidMount.isStatsView then 
                     RaidMount.PopulateUI() 
                 end
                 RaidMount.UpdateFilterStatusDisplay()
             end
+            
+            -- Show checkmark for selected expansions
+            if expansion == "All" then
+                if not RaidMount.currentExpansionFilters or next(RaidMount.currentExpansionFilters) == nil then
+                    info.checked = true
+                end
+            else
+                if RaidMount.currentExpansionFilters and RaidMount.currentExpansionFilters[expansion] then
+                    info.checked = true
+                end
+            end
+            
             UIDropDownMenu_AddButton(info)
         end
     end)
@@ -491,10 +542,19 @@ function RaidMount.FilterAndSortMountData(mountData)
             end
         end
         
-        -- Expansion filter
-        if currentExpansionFilter ~= "All" then
+        -- Expansion filter (multi-select)
+        if RaidMount.currentExpansionFilters and next(RaidMount.currentExpansionFilters) then
             local mountExpansion = (mount.expansion or "Unknown"):lower()
-            if mountExpansion ~= currentExpansionFilter:lower() then
+            local isIncluded = false
+            
+            for expansion in pairs(RaidMount.currentExpansionFilters) do
+                if mountExpansion == expansion:lower() then
+                    isIncluded = true
+                    break
+                end
+            end
+            
+            if not isIncluded then
                 includeMount = false
             end
         end
@@ -506,10 +566,10 @@ function RaidMount.FilterAndSortMountData(mountData)
                     includeMount = false
                 end
             else
-                local mountContentType = (mount.contentType or "Unknown"):lower():gsub("%s+", "")
-                local filterContentType = (currentContentTypeFilter or "Unknown"):lower():gsub("%s+", "")
-                if not mountContentType:find(filterContentType, 1, true) then
-                    includeMount = false
+            local mountContentType = (mount.contentType or "Unknown"):lower():gsub("%s+", "")
+            local filterContentType = (currentContentTypeFilter or "Unknown"):lower():gsub("%s+", "")
+            if not mountContentType:find(filterContentType, 1, true) then
+                includeMount = false
                 end
             end
         end
@@ -582,10 +642,29 @@ function RaidMount.FilterAndSortMountData(mountData)
             elseif RaidMount.sortColumn == "collected" then
                 aVal = a.collected and 1 or 0
                 bVal = b.collected and 1 or 0
-            elseif RaidMount.sortColumn == "raidAvailable" then
-                -- Check if raid is available (lockout info)
-                aVal = (a.raidName and RaidMount.GetRaidLockout and RaidMount.GetRaidLockout(a.raidName) ~= "No lockout") and 1 or 0
-                bVal = (b.raidName and RaidMount.GetRaidLockout and RaidMount.GetRaidLockout(b.raidName) ~= "No lockout") and 1 or 0
+            elseif RaidMount.sortColumn == "lockout" then
+                -- Sort by lockout status: raids with lockout time should be at the top
+                local aLockout = a.raidName and RaidMount.GetRaidLockout and RaidMount.GetRaidLockout(a.raidName) or "No lockout"
+                local bLockout = b.raidName and RaidMount.GetRaidLockout and RaidMount.GetRaidLockout(b.raidName) or "No lockout"
+                
+                -- If both have lockout or both don't have lockout, sort by time remaining
+                if aLockout ~= "No lockout" and bLockout ~= "No lockout" then
+                    -- Both have lockout, sort by time remaining (shorter time first)
+                    aVal = 1
+                    bVal = 1
+                elseif aLockout ~= "No lockout" then
+                    -- Only A has lockout, A should be first
+                    aVal = 1
+                    bVal = 0
+                elseif bLockout ~= "No lockout" then
+                    -- Only B has lockout, B should be first
+                    aVal = 0
+                    bVal = 1
+                else
+                    -- Neither has lockout, sort alphabetically by raid name
+                    aVal = tostring(a.raidName or "")
+                    bVal = tostring(b.raidName or "")
+                end
             elseif RaidMount.sortColumn == "dropRate" then
                 -- Extract numeric value from drop rate strings like "1%" or "~1%"
                 local aRate = (a.dropRate or ""):gsub("[^%d.]", "")

@@ -685,17 +685,28 @@ end
 
 function RaidMount.SetupScrollFrameCallbacks()
     if RaidMount.ScrollFrame then
+        -- Enable mouse wheel scrolling
+        RaidMount.ScrollFrame:EnableMouseWheel(true)
+        
         RaidMount.ScrollFrame:SetScript("OnVerticalScroll", function(self, offset)
             self:SetVerticalScroll(offset)
             UpdateVisibleRowsOptimized()
         end)
         
         RaidMount.ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
-            local newOffset = self:GetVerticalScroll() - (delta * rowHeight * 3)
-            newOffset = math.max(0, math.min(newOffset, (totalRows * rowHeight) - self:GetHeight()))
+            local currentScroll = self:GetVerticalScroll()
+            local maxScroll = (totalRows * rowHeight) - self:GetHeight()
+            local scrollStep = rowHeight * 3
+            
+            local newOffset = currentScroll - (delta * scrollStep)
+            newOffset = math.max(0, math.min(newOffset, maxScroll))
+            
             self:SetVerticalScroll(newOffset)
             UpdateVisibleRowsOptimized()
         end)
+        
+        -- Ensure the scroll frame can receive mouse events
+        RaidMount.ScrollFrame:EnableMouse(true)
     end
 end
 

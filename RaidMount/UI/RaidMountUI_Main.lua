@@ -290,19 +290,25 @@ function RaidMount.CreateButtons()
     -- Version text
     local versionText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     versionText:SetPoint("BOTTOMLEFT", 10, 10)
-            versionText:SetText("|cFF666666Version: 13.07.25.26|r")
+            versionText:SetText("|cFF666666Version: 15.07.25.30|r")
     versionText:SetTextColor(0.4, 0.4, 0.4, 1)
     
     -- Enhanced tooltips checkbox
     local tooltipCheckbox = CreateFrame("CheckButton", "RaidMountTooltipCheckbox", frame, "UICheckButtonTemplate")
     tooltipCheckbox:SetSize(20, 20)
-    tooltipCheckbox:SetPoint("BOTTOMRIGHT", -15, 10)
+    tooltipCheckbox:SetPoint("BOTTOMRIGHT", -150, 10)
     tooltipCheckbox:SetChecked(RaidMountSaved and RaidMountSaved.enhancedTooltip ~= false)
+
+    -- Mount drop sound checkbox
+    local soundCheckbox = CreateFrame("CheckButton", "RaidMountSoundCheckbox", frame, "UICheckButtonTemplate")
+    soundCheckbox:SetSize(20, 20)
+    soundCheckbox:SetPoint("RIGHT", tooltipCheckbox, "LEFT", -90, 0)
+    soundCheckbox:SetChecked(RaidMountSettings and RaidMountSettings.mountDropSound ~= false)
 
     -- Popup enabled checkbox
     local popupCheckbox = CreateFrame("CheckButton", "RaidMountPopupCheckbox", frame, "UICheckButtonTemplate")
     popupCheckbox:SetSize(20, 20)
-    popupCheckbox:SetPoint("RIGHT", tooltipCheckbox, "LEFT", -90, 0)
+    popupCheckbox:SetPoint("RIGHT", soundCheckbox, "LEFT", -90, 0)
     popupCheckbox:SetChecked(RaidMountSaved and RaidMountSaved.popupEnabled ~= false)
 
     -- Popup label
@@ -310,6 +316,31 @@ function RaidMount.CreateButtons()
     popupLabel:SetPoint("RIGHT", popupCheckbox, "LEFT", -8, 0)
     popupLabel:SetText("|cFF999999World Boss Alert|r")
     popupLabel:SetTextColor(0.6, 0.6, 0.6, 1)
+
+    -- Character Checker button (moved to bottom right)
+    local charCheckerButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    charCheckerButton:SetSize(120, 25)
+    charCheckerButton:SetPoint("BOTTOMRIGHT", -15, 10)
+    charCheckerButton:SetText("Alt Data")
+    charCheckerButton:SetScript("OnClick", function()
+        if RaidMount.UpdateCharacterChecker then
+            -- Check if character checker frame exists and is shown
+            local charFrame = _G["RaidMountCharacterChecker"]
+            if charFrame and charFrame:IsShown() then
+                charFrame:Hide()
+            else
+                RaidMount.UpdateCharacterChecker()
+            end
+        else
+            print("Character checker not available. Try /rm characters instead.")
+        end
+    end)
+
+    -- Sound label
+    local soundLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    soundLabel:SetPoint("RIGHT", soundCheckbox, "LEFT", -5, 0)
+    soundLabel:SetText("|cFF999999Mount Drop Sound|r")
+    soundLabel:SetTextColor(0.6, 0.6, 0.6, 1)
 
     -- Checkbox label
     local tooltipLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -323,12 +354,17 @@ function RaidMount.CreateButtons()
         if not RaidMountSaved then RaidMountSaved = {} end
         RaidMountSaved.enhancedTooltip = RaidMountTooltipEnabled
     end)
+    soundCheckbox:SetScript("OnClick", function(self)
+        if not RaidMountSettings then RaidMountSettings = {} end
+        RaidMountSettings.mountDropSound = self:GetChecked()
+    end)
     popupCheckbox:SetScript("OnClick", function(self)
         if not RaidMountSaved then RaidMountSaved = {} end
         RaidMountSaved.popupEnabled = self:GetChecked()
     end)
 
     frame.tooltipCheckbox = tooltipCheckbox
+    frame.soundCheckbox = soundCheckbox
     frame.popupCheckbox = popupCheckbox
 end
 

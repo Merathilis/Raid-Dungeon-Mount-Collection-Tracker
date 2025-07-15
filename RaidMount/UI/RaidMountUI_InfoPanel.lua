@@ -336,8 +336,17 @@ function RaidMount.ShowInfoPanel(data)
     
     if attemptData and type(attemptData) == "table" and attemptData.characters then
         local characterAttempts = {}
-        for charName, count in pairs(attemptData.characters) do
-            if type(count) == "number" and count > 0 then
+        for charName, charData in pairs(attemptData.characters) do
+            local count = 0
+            if type(charData) == "number" then
+                -- Old format migration
+                count = charData
+            elseif type(charData) == "table" and charData.count then
+                -- New format
+                count = charData.count
+            end
+            
+            if count > 0 then
                 local shortName = charName:match("([^%-]+)") or charName
                 if #shortName > 12 then shortName = shortName:sub(1, 12) end
                 
@@ -351,8 +360,6 @@ function RaidMount.ShowInfoPanel(data)
                 if attemptData.classes and attemptData.classes[charName] then
                     class = attemptData.classes[charName]
                 end
-                
-
                 
                 local color = GetClassColor(class)
                 local coloredName = "|cFF" .. color .. shortName .. "|r"
