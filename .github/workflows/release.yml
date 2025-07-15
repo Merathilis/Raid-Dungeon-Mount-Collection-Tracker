@@ -15,6 +15,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Debug Fetch versions response
+        run: |
+          curl -s -H "x-api-key: ${{ secrets.CF_API_KEY }}" https://wow.curseforge.com/api/game/versions > response.json
+          cat response.json
+
       - name: Fetch latest Retail game version ID
         id: get-retail-id
         run: |
