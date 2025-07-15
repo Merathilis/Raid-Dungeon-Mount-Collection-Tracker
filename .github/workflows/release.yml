@@ -23,7 +23,6 @@ jobs:
       - name: Fetch latest Retail game version ID
         id: get-retail-id
         run: |
-          # Fetch latest retail version ID matching semantic versioning (e.g. "10.0.7")
           RETAIL_ID=$(curl -s -H "X-Api-Token: ${{ secrets.CURSEFORGE_TOKEN }}" https://wow.curseforge.com/api/game/versions | \
             jq '[.[] | select(.flavor=="wow_retail" and (.name | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")))][-1].id' -r)
           echo "RETAIL_ID=$RETAIL_ID" >> $GITHUB_ENV
@@ -39,7 +38,6 @@ jobs:
               print "  game-versions:"
               print "    - " id "  # Auto-fetched latest retail version"
               inserted=1
-              # Skip existing lines starting with dash (old versions)
               while(getline && /^[[:space:]]*-/) {}
               if(length($0)) print
               next
