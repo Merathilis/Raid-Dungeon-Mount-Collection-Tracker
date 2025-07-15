@@ -1,0 +1,20 @@
+package-as: RaidMount
+
+ignore:
+  - .github
+  - .vscode
+  - .gitignore
+  - README.md
+  - LICENSE
+  - build/
+  - upload/
+  - version.txt
+  - docs/
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+curseforge:
+  id: 1204427
+  game-version:  
