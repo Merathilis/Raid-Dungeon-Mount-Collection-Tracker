@@ -2,8 +2,9 @@
 ## Notes: Tracks raid and dungeon mount attempts, collections, and lockouts with modernized UI and enhanced features.
 ## Interface: 110107, 110200
 ## Author: knutballs @EU Ravencrest
-## Version: 15.07.25.30
+## Version: 15.07.25.31
 ## SavedVariables: RaidMountAttempts, RaidMountSettings, RaidMountSaved
+## OptionalDeps: ElvUI
 
 ## X-Category: Boss Encounters
 ## X-Website: https://github.com/j0s0r/RaidMount
@@ -19,6 +20,7 @@ Localization/Localization-frFR.lua
 Localization/Localization-esES.lua
 Localization/Localization-ruRU.lua
 Localization/Localization-zhCN.lua
+Localization/Localization-zhTW.lua
 
 # Core data files
 Data/MountData.lua
@@ -40,6 +42,7 @@ UI/RaidMountUI_InfoPanel.lua
 UI/RaidMountUI_IconView.lua
 UI/RaidMountUI_CharacterChecker.lua
 UI/RaidMountUI.lua
+UI/RaidMountUI_ElvUI.lua
 
 # Coordinates file (load after main addon is initialized)
 Data/RaidMountCoordinates.lua
