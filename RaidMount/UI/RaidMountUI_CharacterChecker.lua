@@ -2,6 +2,10 @@
 local addonName, RaidMount = ...
 RaidMount = RaidMount or {}
 
+-- ElvUI Skinning Support
+local E = unpack(ElvUI)
+local S = E:GetModule("Skins")
+
 -- Character Data Checker Frame
 local characterCheckerFrame = nil
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
@@ -32,6 +36,10 @@ local function CreateCharacterCheckerFrame()
 	characterCheckerFrame:SetScript("OnDragStart", characterCheckerFrame.StartMoving)
 	characterCheckerFrame:SetScript("OnDragStop", characterCheckerFrame.StopMovingOrSizing)
 	characterCheckerFrame:Hide()
+	if E then
+		characterCheckerFrame:StripTextures()
+		characterCheckerFrame:SetTemplate("Transparent")
+	end
 
 	-- Title
 	local title = characterCheckerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -40,10 +48,17 @@ local function CreateCharacterCheckerFrame()
 	title:SetText("|cFF33CCFFRaid|r and |cFF33CCFFDungeon|r |cFFFF0000Mount|r |cFFFFD700Tracker|r - Alt Data")
 	characterCheckerFrame.title = title
 
+	if E then
+		title:FontTemplate(nil, 16)
+	end
+
 	-- Close button
 	local closeButton = CreateFrame("Button", nil, characterCheckerFrame, "UIPanelCloseButton")
 	closeButton:SetPoint("TOPRIGHT", characterCheckerFrame, "TOPRIGHT", -5, -5)
 	closeButton:SetScript("OnClick", function() characterCheckerFrame:Hide() end)
+	if E then
+		S:HandleCloseButton(closeButton)
+	end
 
 	-- Add a subtitle for instructions
 	local subtitle = characterCheckerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -61,6 +76,12 @@ local function CreateCharacterCheckerFrame()
 	scrollChild:SetSize(350, 800)
 	scrollFrame:SetScrollChild(scrollChild)
 
+	if E then
+		if scrollFrame.ScrollBar then
+			S:HandleScrollBar(scrollFrame.ScrollBar)
+		end
+	end
+
 	characterCheckerFrame.scrollFrame = scrollFrame
 	characterCheckerFrame.scrollChild = scrollChild
 
@@ -76,6 +97,9 @@ local function CreateCharacterCheckerFrame()
 			print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Refresh function not available.")
 		end
 	end)
+	if E then
+		S:HandleButton(refreshButton)
+	end
 
 	local verifyButton = CreateFrame("Button", nil, characterCheckerFrame, "UIPanelButtonTemplate")
 	verifyButton:SetSize(80, 25)
@@ -88,6 +112,9 @@ local function CreateCharacterCheckerFrame()
 			print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Verify function not available.")
 		end
 	end)
+	if E then
+		S:HandleButton(verifyButton)
+	end
 
 	local debugButton = CreateFrame("Button", nil, characterCheckerFrame, "UIPanelButtonTemplate")
 	debugButton:SetSize(80, 25)
@@ -100,6 +127,9 @@ local function CreateCharacterCheckerFrame()
 			print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Debug function not available.")
 		end
 	end)
+	if E then
+		S:HandleButton(debugButton)
+	end
 
 	return characterCheckerFrame
 end
