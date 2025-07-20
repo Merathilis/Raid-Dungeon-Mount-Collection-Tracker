@@ -36,6 +36,7 @@ local function CreateCharacterCheckerFrame()
 	characterCheckerFrame:SetScript("OnDragStart", characterCheckerFrame.StartMoving)
 	characterCheckerFrame:SetScript("OnDragStop", characterCheckerFrame.StopMovingOrSizing)
 	characterCheckerFrame:Hide()
+
 	if E then
 		characterCheckerFrame:StripTextures()
 		characterCheckerFrame:SetTemplate("Transparent")
@@ -56,6 +57,7 @@ local function CreateCharacterCheckerFrame()
 	local closeButton = CreateFrame("Button", nil, characterCheckerFrame, "UIPanelCloseButton")
 	closeButton:SetPoint("TOPRIGHT", characterCheckerFrame, "TOPRIGHT", -5, -5)
 	closeButton:SetScript("OnClick", function() characterCheckerFrame:Hide() end)
+
 	if E then
 		S:HandleCloseButton(closeButton)
 	end
@@ -97,6 +99,7 @@ local function CreateCharacterCheckerFrame()
 			print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Refresh function not available.")
 		end
 	end)
+
 	if E then
 		S:HandleButton(refreshButton)
 	end
@@ -112,6 +115,7 @@ local function CreateCharacterCheckerFrame()
 			print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Verify function not available.")
 		end
 	end)
+
 	if E then
 		S:HandleButton(verifyButton)
 	end
@@ -127,6 +131,7 @@ local function CreateCharacterCheckerFrame()
 			print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Debug function not available.")
 		end
 	end)
+
 	if E then
 		S:HandleButton(debugButton)
 	end
