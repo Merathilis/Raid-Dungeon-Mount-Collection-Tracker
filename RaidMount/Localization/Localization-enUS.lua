@@ -105,6 +105,17 @@ local enUSLocale = {
     ["ACTIVE_FILTERS"] = "Active Filters: %s",
     ["NO_FILTERS_ACTIVE"] = "No filters active - showing all mounts",
     ["NO_MOUNTS_FOUND"] = "No mounts found matching your criteria.",
+    ["NEW_MOUNT_COLLECTED"] = "New mount collected! Mount ID: %d",
+    ["DIFFICULTY_SET"] = "%s is set to %s",
+    ["TOMTOM_WAYPOINT_SET"] = "TomTom waypoint set for %s",
+    ["COULD_NOT_FIND_MAP_ID"] = "Could not find map ID for zone: %s",
+    ["WAYPOINT_SET"] = "Waypoint set for %s at %s (%.1f, %.1f)",
+    ["MOUNT_LOCATION"] = "%s location: %s (%s) - %.1f, %.1f",
+    ["INSTALL_TOMTOM"] = "Install TomTom addon for better cross-expansion waypoint support",
+    ["TRAVEL_GUIDE"] = "RaidMount Travel Guide: %s",
+    ["CROSS_EXPANSION_TRAVEL"] = "Cross-expansion travel: %s -> %s (%s)",
+    ["TRAVEL_NEEDED"] = "Travel needed: %s -> %s (%s)",
+    ["INSTANCE_EXPANSION_INFO"] = "Instance: %s | Expansion: %s",
     
     -- Errors
     ["ERROR_HEADERS_NOT_INIT"] = "RaidMount: Warning - HeaderTexts not initialized",

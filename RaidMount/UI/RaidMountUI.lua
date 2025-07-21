@@ -9,18 +9,24 @@ if not RaidMount then
     return
 end
 
+-- Don't wipe RaidMountAttempts - just ensure it exists
 if not RaidMountAttempts then
     RaidMountAttempts = {}
 end
 
-local currentFilter = "All"
-local currentContentTypeFilter = "All"
-local currentSearch = ""
-local currentExpansionFilter = "All"
-local sortColumn = "mountName"
-local sortDescending = false
-local isStatsView = false
+-- Initialize filter variables
+RaidMount.currentFilter = RaidMount.currentFilter or "All"
+RaidMount.currentExpansionFilter = RaidMount.currentExpansionFilter or "All"
+RaidMount.currentContentTypeFilter = RaidMount.currentContentTypeFilter or "All"
+RaidMount.currentDifficultyFilter = RaidMount.currentDifficultyFilter or "All"
+RaidMount.currentSearch = RaidMount.currentSearch or ""
 
+-- Initialize sort variables
+RaidMount.sortColumn = RaidMount.sortColumn or "mountName"
+RaidMount.sortDescending = RaidMount.sortDescending or false
+RaidMount.isStatsView = RaidMount.isStatsView or false
+
+-- Cache frequently accessed values
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
 local mountLookupBySpellID = {}
@@ -48,6 +54,9 @@ function RaidMount.BuildMountLookupTables()
         end
         expansionMountCounts[expansion] = expansionMountCounts[expansion] + 1
     end
+    
+    -- Build search index for optimized searching
+    RaidMount.BuildSearchIndex()
 end
 
 local staticMountDataCache = nil
@@ -69,67 +78,6 @@ local function InvalidateCache()
     lastFilterState = {hash = ""}
 end
 
-function RaidMount.GetCombinedMountData()
-    local currentTime = GetTime()
-    if mountDataCache and mountDataCacheTime > 0 and (currentTime - mountDataCacheTime) < CACHE_DURATION then
-        return mountDataCache
-    end
-    
-    local combinedData = {}
-    
-    if not RaidMount.mountInstances then
-        return combinedData
-    end
-    
-    for _, mount in ipairs(RaidMount.mountInstances) do
-        local trackingKey = mount.spellID
-        local attempts = RaidMount.GetAttempts and RaidMount.GetAttempts(mount) or 0
-        local attemptData = RaidMountAttempts[trackingKey]
-        local lastAttempt = "Never"
-        local hasMount = false
-        
-        if attemptData and type(attemptData) == "table" then
-            hasMount = attemptData.collected or false
-            if attemptData.lastAttempt then
-                lastAttempt = date("%d/%m/%y", attemptData.lastAttempt)
-            end
-        end
-        
-        if not hasMount and RaidMount.PlayerHasMount then
-            hasMount = RaidMount.PlayerHasMount(mount.MountID, mount.itemID, mount.spellID)
-            if hasMount and attemptData then
-                attemptData.collected = true
-            end
-        end
-        
-        local lockoutInfo = RaidMount.GetRaidLockout and RaidMount.GetRaidLockout(mount.raidName) or "Unknown"
-        table.insert(combinedData, {
-            raidName = mount.raidName or "Unknown",
-            bossName = mount.bossName or "Unknown", 
-            mountName = mount.mountName or "Unknown",
-            location = mount.location or mount.raidName or "Unknown",
-            dropRate = mount.dropRate or "~1%",
-            resetTime = lockoutInfo,
-            lockoutStatus = lockoutInfo,
-            difficulty = mount.difficulty or "Unknown",
-            expansion = mount.expansion or "Unknown",
-            collected = hasMount,
-            attempts = attempts,
-            lastAttempt = lastAttempt,
-            mountID = mount.MountID,
-            spellID = mount.spellID,
-            itemID = mount.itemID,
-            contentType = mount.contentType or "Raid",
-            type = mount.contentType or "Raid",
-            collectorsBounty = mount.collectorsBounty
-        })
-    end
-    
-    mountDataCache = combinedData
-    mountDataCacheTime = currentTime
-    
-    return combinedData
-end
 
 function RaidMount.ClearMountCache()
     InvalidateCache()
@@ -195,6 +143,125 @@ end
 
 RaidMount.ShowIconView = RaidMount.ShowIconView or function() end
 RaidMount.HideIconView = RaidMount.HideIconView or function() end
+
+-- Optimized search and filtering system
+local searchIndex = {}
+local filterCache = {}
+local lastFilterHash = ""
+
+-- Build search index for fast lookups
+function RaidMount.BuildSearchIndex()
+    if not RaidMount.mountInstances then 
+        return 
+    end
+    
+    searchIndex = {}
+    
+    for i, mount in ipairs(RaidMount.mountInstances) do
+        local searchableText = {}
+        
+        -- Pre-process and cache searchable text
+        if mount.mountName then
+            local mountNameLower = mount.mountName:lower()
+            table.insert(searchableText, mountNameLower)
+            -- Add individual words for partial matching
+            for word in mountNameLower:gmatch("%S+") do
+                table.insert(searchableText, word)
+            end
+        end
+        
+        if mount.raidName then
+            local raidNameLower = mount.raidName:lower()
+            table.insert(searchableText, raidNameLower)
+            for word in raidNameLower:gmatch("%S+") do
+                table.insert(searchableText, word)
+            end
+        end
+        
+        if mount.bossName then
+            local bossNameLower = mount.bossName:lower()
+            table.insert(searchableText, bossNameLower)
+            for word in bossNameLower:gmatch("%S+") do
+                table.insert(searchableText, word)
+            end
+        end
+        
+        if mount.expansion then
+            table.insert(searchableText, mount.expansion:lower())
+        end
+        
+        if mount.contentType then
+            table.insert(searchableText, mount.contentType:lower())
+        end
+        
+        -- Add Collector's Bounty to searchable text
+        if mount.collectorsBounty and mount.collectorsBounty ~= false then
+            table.insert(searchableText, "collector's bounty")
+            table.insert(searchableText, "bounty")
+            table.insert(searchableText, "collector")
+        end
+        
+        -- Create search index for this mount
+        searchIndex[i] = {
+            mountIndex = i,
+            searchableText = searchableText,
+            searchableString = table.concat(searchableText, " ")
+        }
+    end
+end
+
+-- Fast search function using pre-built index
+function RaidMount.FastSearch(searchTerm, mountData)
+    if not searchTerm or searchTerm == "" then
+        return mountData -- Return all data if no search term
+    end
+    
+    local searchLower = searchTerm:lower()
+    local results = {}
+    local resultSet = {}
+    
+    -- Use pre-built search index for fast lookups
+    for _, indexEntry in ipairs(searchIndex) do
+        if indexEntry.searchableString:find(searchLower, 1, true) then
+            local mount = mountData[indexEntry.mountIndex]
+            if mount and not resultSet[mount] then
+                table.insert(results, mount)
+                resultSet[mount] = true
+            end
+        end
+    end
+    
+    return results
+end
+
+-- Combined optimized filter and sort (delegates to Filters module)
+-- This function is now handled by the Filters module
+-- The actual implementation is in RaidMountUI_Filters.lua
+
+-- Clear filter cache when needed (delegates to Filters module)
+-- This function is now handled by the Filters module
+-- The actual implementation is in RaidMountUI_Filters.lua
+
+-- Timer management is handled by Core/RaidMountSession.lua
+-- This module delegates to the core implementation
+
+-- Debug function to verify Collector's Bounty detection
+function RaidMount.DebugCollectorsBounty()
+    if not RaidMount.mountInstances then return end
+    
+    local bountyCount = 0
+    local totalCount = 0
+    
+    for _, mount in ipairs(RaidMount.mountInstances) do
+        totalCount = totalCount + 1
+        if mount.collectorsBounty and mount.collectorsBounty ~= false then
+            bountyCount = bountyCount + 1
+            print("Collector's Bounty mount found: " .. (mount.mountName or "Unknown"))
+        end
+    end
+    
+    print("Total mounts: " .. totalCount .. ", Collector's Bounty mounts: " .. bountyCount)
+end
 
 
 

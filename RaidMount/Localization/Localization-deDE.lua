@@ -105,6 +105,17 @@ local deDELocale = {
     ["ACTIVE_FILTERS"] = "Aktive Filter: %s",
     ["NO_FILTERS_ACTIVE"] = "Keine aktiven Filter - zeige alle Mounts",
     ["NO_MOUNTS_FOUND"] = "Keine Mounts gefunden, die deinen Kriterien entsprechen.",
+    ["NEW_MOUNT_COLLECTED"] = "Neues Reittier gesammelt! Reittier-ID: %d",
+    ["DIFFICULTY_SET"] = "%s ist auf %s eingestellt",
+    ["TOMTOM_WAYPOINT_SET"] = "TomTom-Wegpunkt für %s gesetzt",
+    ["COULD_NOT_FIND_MAP_ID"] = "Karten-ID für Zone nicht gefunden: %s",
+    ["WAYPOINT_SET"] = "Wegpunkt für %s bei %s (%.1f, %.1f) gesetzt",
+    ["MOUNT_LOCATION"] = "%s Standort: %s (%s) - %.1f, %.1f",
+    ["INSTALL_TOMTOM"] = "Installiere TomTom-Addon für bessere Cross-Expansion-Wegpunkt-Unterstützung",
+    ["TRAVEL_GUIDE"] = "RaidMount Reiseführer: %s",
+    ["CROSS_EXPANSION_TRAVEL"] = "Cross-Expansion-Reise: %s -> %s (%s)",
+    ["TRAVEL_NEEDED"] = "Reise erforderlich: %s -> %s (%s)",
+    ["INSTANCE_EXPANSION_INFO"] = "Instanz: %s | Erweiterung: %s",
     
     -- Errors
     ["ERROR_HEADERS_NOT_INIT"] = "RaidMount: Warnung - HeaderTexts nicht initialisiert",

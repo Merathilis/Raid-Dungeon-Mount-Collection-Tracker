@@ -105,6 +105,17 @@ local esESLocale = {
     ["ACTIVE_FILTERS"] = "Filtros activos: %s",
     ["NO_FILTERS_ACTIVE"] = "No hay filtros activos - mostrando todas las monturas",
     ["NO_MOUNTS_FOUND"] = "No se encontraron monturas que coincidan con tus criterios.",
+    ["NEW_MOUNT_COLLECTED"] = "¡Nueva montura obtenida! ID de montura: %d",
+    ["DIFFICULTY_SET"] = "%s está configurado en %s",
+    ["TOMTOM_WAYPOINT_SET"] = "Punto de referencia TomTom establecido para %s",
+    ["COULD_NOT_FIND_MAP_ID"] = "No se pudo encontrar el ID del mapa para la zona: %s",
+    ["WAYPOINT_SET"] = "Punto de referencia establecido para %s en %s (%.1f, %.1f)",
+    ["MOUNT_LOCATION"] = "Ubicación de %s: %s (%s) - %.1f, %.1f",
+    ["INSTALL_TOMTOM"] = "Instala el addon TomTom para mejor soporte de puntos de referencia cross-expansion",
+    ["TRAVEL_GUIDE"] = "Guía de viaje RaidMount: %s",
+    ["CROSS_EXPANSION_TRAVEL"] = "Viaje cross-expansion: %s -> %s (%s)",
+    ["TRAVEL_NEEDED"] = "Viaje necesario: %s -> %s (%s)",
+    ["INSTANCE_EXPANSION_INFO"] = "Instancia: %s | Expansión: %s",
     
     -- Errors
     ["ERROR_HEADERS_NOT_INIT"] = "RaidMount: Advertencia - HeaderTexts no inicializado",

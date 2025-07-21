@@ -99,7 +99,12 @@ function RaidMount.ShowIconView()
             end)
             btn:SetScript("OnEnter", function(self)
                 if RaidMountTooltipEnabled and RaidMount.ShowTooltip then
-                    RaidMount.ShowTooltip(self, self.data)
+                    -- Get current lockout status for this mount's raid
+                    local currentLockoutStatus = "Unknown"
+                    if self.data and self.data.raidName then
+                        currentLockoutStatus = RaidMount.GetRaidLockout(self.data.raidName)
+                    end
+                    RaidMount.ShowTooltip(self, self.data, currentLockoutStatus)
                 end
                 if RaidMount.ShowInfoPanel then
                     RaidMount.ShowInfoPanel(self.data)

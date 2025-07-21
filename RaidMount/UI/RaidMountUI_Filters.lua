@@ -9,9 +9,93 @@ local PrintAddonMessage = RaidMount.PrintAddonMessage
 -- Cache frequently accessed values
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
--- Search state management
+-- Initialize filter variables if not already set
+RaidMount.currentFilter = RaidMount.currentFilter or "All"
+RaidMount.currentExpansionFilters = RaidMount.currentExpansionFilters or {}
+RaidMount.currentExpansionFilter = RaidMount.currentExpansionFilter or "All" -- For compatibility
+RaidMount.currentContentTypeFilter = RaidMount.currentContentTypeFilter or "All"
+RaidMount.currentDifficultyFilter = RaidMount.currentDifficultyFilter or "All"
+RaidMount.currentSearch = RaidMount.currentSearch or ""
+
+-- Optimized search with event-driven debouncing
 local searchTimer = nil
-local lastSearchText = ""
+local lastSearchTerm = ""
+local isInitializing = true
+local searchInProgress = false
+
+local function PerformSearch(searchTerm)
+    -- Don't search if it's the placeholder text or empty
+    local placeholder = RaidMount.L and RaidMount.L("SEARCH_PLACEHOLDER") or "Search mounts, raids, or bosses..."
+    if searchTerm == placeholder or searchTerm == "" or not searchTerm then
+        searchTerm = ""
+    end
+    
+    if searchTerm == lastSearchTerm then return end
+    
+    lastSearchTerm = searchTerm
+    RaidMount.currentSearch = searchTerm
+    
+    -- Clear filter cache for fresh results
+    if RaidMount.ClearFilterCache then
+        RaidMount.ClearFilterCache()
+    end
+    
+    -- Update filter status display immediately
+    if RaidMount.UpdateFilterStatusDisplay then
+        RaidMount.UpdateFilterStatusDisplay()
+    end
+end
+
+local function OnSearchTextChanged(self)
+    if isInitializing then 
+        return 
+    end
+    
+    local searchTerm = self:GetText()
+    
+    -- Cancel previous timer
+    if searchTimer then
+        searchTimer:Cancel()
+        searchTimer = nil
+    end
+    
+    -- Immediate visual feedback - update search state instantly
+    RaidMount.currentSearch = searchTerm
+    
+    -- Show clear button immediately if there's text
+    if self.clearButton then
+        if searchTerm ~= "" and searchTerm ~= (RaidMount.L and RaidMount.L("SEARCH_PLACEHOLDER") or "Search mounts, raids, or bosses...") then
+            self.clearButton:Show()
+        else
+            self.clearButton:Hide()
+        end
+    end
+    
+    -- Update filter status display immediately for instant feedback
+    if RaidMount.UpdateFilterStatusDisplay then
+        RaidMount.UpdateFilterStatusDisplay()
+    end
+    
+    -- Only update UI if not already in progress to prevent spam
+    if not searchInProgress and not RaidMount.isStatsView and RaidMount.PopulateUI then
+        searchInProgress = true
+        -- Immediate UI update for instant feedback
+        RaidMount.PopulateUI()
+        searchInProgress = false
+    end
+    
+    -- Schedule final search with minimal debouncing for final processing
+    if RaidMount.ScheduleDelayedTask then
+        searchTimer = RaidMount.ScheduleDelayedTask(0.02, function() -- Reduced to 0.02s for near-instant
+            PerformSearch(searchTerm)
+        end, "search_debounce")
+    else
+        -- Fallback if scheduler not available
+        C_Timer.After(0.02, function()
+            PerformSearch(searchTerm)
+        end)
+    end
+end
 
 -- CREATE SEARCH AND FILTER COMPONENTS
 function RaidMount.CreateSearchAndFilters()
@@ -30,9 +114,18 @@ function RaidMount.CreateSearchAndFilters()
     editBg:SetAllPoints()
     editBg:SetColorTexture(0.05, 0.05, 0.1, 0.9)
     
-    local placeholder = RaidMount.L("SEARCH_PLACEHOLDER")
+    local placeholder = RaidMount.L and RaidMount.L("SEARCH_PLACEHOLDER") or "Search mounts, raids, or bosses..."
     searchBox:SetText(placeholder)
     searchBox:SetTextColor(0.6, 0.6, 0.6, 1)
+    
+    -- Initialize search state to prevent initial search
+    RaidMount.currentSearch = ""
+    lastSearchTerm = ""
+    
+    -- End initialization phase faster
+    C_Timer.After(0.1, function() -- Reduced from 0.5s to 0.1s
+        isInitializing = false
+    end)
     
     -- Clear button for search box
     local clearButton = CreateFrame("Button", nil, searchBox)
@@ -43,10 +136,14 @@ function RaidMount.CreateSearchAndFilters()
     clearButton:SetHighlightFontObject("GameFontHighlightSmall")
     clearButton:Hide()
     
+    -- Store reference to clear button for immediate access
+    searchBox.clearButton = clearButton
+    
     clearButton:SetScript("OnClick", function()
         searchBox:SetText("")
         searchBox:ClearFocus()
         RaidMount.currentSearch = ""
+        clearButton:Hide()
         if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() and not RaidMount.isStatsView then
             RaidMount.PopulateUI()
         end
@@ -57,7 +154,9 @@ function RaidMount.CreateSearchAndFilters()
             self:SetText("")
             self:SetTextColor(1, 1, 1, 1)
         end
-        clearButton:Show()
+        if self:GetText() ~= "" then
+            clearButton:Show()
+        end
     end)
     
     searchBox:SetScript("OnEditFocusLost", function(self)
@@ -68,48 +167,7 @@ function RaidMount.CreateSearchAndFilters()
         end
     end)
     
-    searchBox:SetScript("OnTextChanged", function(self, userInput)
-        if userInput then
-            local currentText = self:GetText()
-            
-            -- Show/hide clear button based on text content
-            if currentText ~= "" and currentText ~= placeholder then
-                clearButton:Show()
-            else
-                clearButton:Hide()
-            end
-            
-            -- Cancel previous timer to prevent conflicts
-            if searchTimer then
-                searchTimer:Cancel()
-                searchTimer = nil
-            end
-            
-            -- Only process if text actually changed
-            if currentText ~= lastSearchText then
-                lastSearchText = currentText
-                
-                if currentText ~= placeholder then
-                    RaidMount.currentSearch = currentText:lower():trim()
-                    
-                    -- Debounce search with timer
-                    searchTimer = C_Timer.After(0.1, function()
-                        searchTimer = nil
-                        if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() and not RaidMount.isStatsView then
-                            RaidMount.PopulateUI()
-                        end
-                        RaidMount.UpdateFilterStatusDisplay()
-                    end)
-                elseif currentText == "" or currentText == placeholder then
-                    RaidMount.currentSearch = ""
-                    if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() and not RaidMount.isStatsView then
-                        RaidMount.PopulateUI()
-                    end
-                    RaidMount.UpdateFilterStatusDisplay()
-                end
-            end
-        end
-    end)
+    searchBox:SetScript("OnTextChanged", OnSearchTextChanged)
     
     -- Add Enter key support for immediate search
     searchBox:SetScript("OnEnterPressed", function(self)
@@ -128,6 +186,7 @@ function RaidMount.CreateSearchAndFilters()
         if self:GetText() ~= "" and self:GetText() ~= placeholder then
             self:SetText("")
             RaidMount.currentSearch = ""
+            clearButton:Hide()
             if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() and not RaidMount.isStatsView then
                 RaidMount.PopulateUI()
             end
@@ -159,7 +218,7 @@ function RaidMount.CreateSearchAndFilters()
         GameTooltip:Hide()
     end)
     
-    -- Create filter dropdowns
+    -- Create filter dropdowns with optimized initialization
     RaidMount.CreateFilterDropdowns()
 end
 
@@ -176,7 +235,52 @@ function RaidMount.ResetSearchState()
         searchTimer:Cancel()
         searchTimer = nil
     end
-    lastSearchText = ""
+    lastSearchTerm = ""
+end
+
+-- Clear filter cache (placeholder function)
+function RaidMount.ClearFilterCache()
+    -- This function can be used to clear any cached filter results
+    -- Currently just a placeholder for future optimization
+end
+
+-- Test function to verify filtering works
+function RaidMount.TestFiltering()
+    local mountData = RaidMount.GetCombinedMountData()
+    if mountData then
+        local filtered = RaidMount.FilterAndSortMountData(mountData)
+        print("Filter test complete: " .. #filtered .. " mounts shown")
+    else
+        print("No mount data available for testing")
+    end
+end
+
+-- Test function to verify color consistency
+function RaidMount.TestMountColors()
+    print("=== RaidMount Color System Test ===")
+    
+    -- Test color constants
+    print("Color Constants:")
+    for colorName, colorCode in pairs(RaidMount.MOUNT_COLORS) do
+        print("  " .. colorName .. ": " .. colorCode .. "Sample Text|r")
+    end
+    
+    -- Test with sample mount data
+    local testMounts = {
+        {mountName = "Test Collected Mount", collected = true, collectorsBounty = false},
+        {mountName = "Test Uncollected Mount", collected = false, collectorsBounty = false},
+        {mountName = "Test Bounty Mount (Collected)", collected = true, collectorsBounty = true},
+        {mountName = "Test Bounty Mount (Uncollected)", collected = false, collectorsBounty = true},
+    }
+    
+    print("\nColor Test Results:")
+    for _, mount in ipairs(testMounts) do
+        local qualityColor = RaidMount.GetMountNameColor(mount)
+        print("  " .. mount.mountName .. ":")
+        print("    Quality Color: " .. qualityColor .. mount.mountName .. "|r")
+    end
+    
+    print("=== Test Complete ===")
 end
 
 -- Clear all filters function
@@ -187,6 +291,9 @@ function RaidMount.ClearAllFilters()
     RaidMount.currentContentTypeFilter = "All"
     RaidMount.currentDifficultyFilter = "All"
     RaidMount.currentSearch = ""
+    
+    -- Also reset the old expansion filter variable for compatibility
+    RaidMount.currentExpansionFilter = "All"
     
     -- Reset all dropdowns
     local dropdowns = {
@@ -209,9 +316,28 @@ function RaidMount.ClearAllFilters()
         RaidMount.SearchBox:SetTextColor(0.6, 0.6, 0.6, 1)
     end
     
+    -- Clear any cached data to ensure fresh lockout information
+    if RaidMount.ClearTooltipCache then
+        RaidMount.ClearTooltipCache()
+    end
+    
+    -- Clear filter cache for fresh results
+    if RaidMount.ClearFilterCache then
+        RaidMount.ClearFilterCache()
+    end
+    
     -- Update the UI
     if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() and not RaidMount.isStatsView then
         RaidMount.PopulateUI()
+        
+        -- Force a refresh of difficulty buttons after clearing filters
+        RaidMount.ScheduleDelayedTask(0.1, function()
+            if RaidMount.UpdateVisibleRowsOptimized then
+                RaidMount.UpdateVisibleRowsOptimized()
+            elseif RaidMount.UpdateVisibleRows then
+                RaidMount.UpdateVisibleRows()
+            end
+        end, "clear_filters_refresh")
     end
     
     -- Update filter status display
@@ -279,26 +405,48 @@ function RaidMount.CreateFilterDropdowns()
     -- Row 1: Collection Status and Expansion (most commonly used)
     local row1Y = -30
     
+    -- Pre-define options for faster initialization
+    local collectionOptions = {"All", "Collected", "Not Collected"}
+    local contentTypeOptions = {"All", "Raid", "Dungeon", "World", "Collector's Bounty"}
+    local difficultyOptions = {"All", "Normal", "Heroic", "Mythic", "Timewalking"}
+    local expansionOptions = {
+        "All", "Classic", "The Burning Crusade", "Wrath of the Lich King", 
+        "Cataclysm", "Mists of Pandaria", "Warlords of Draenor", "Legion", 
+        "Battle for Azeroth", "Shadowlands", "Dragonflight", "The War Within", "Holiday Event"
+    }
+    
     -- Collection Status filter
     local collectedDropdown = CreateFrame("Frame", "RaidMountCollectedDropdown", filterContainer, "UIDropDownMenuTemplate")
     collectedDropdown:SetPoint("TOPLEFT", 0, row1Y)
-    UIDropDownMenu_Initialize(collectedDropdown, function()
-        local options = {"All", "Collected", "Uncollected"}
-        for _, option in ipairs(options) do
+    
+    -- Initialize dropdown with proper function
+    UIDropDownMenu_Initialize(collectedDropdown, function(self, level)
+        UIDropDownMenu_ClearAll(collectedDropdown)
+        for _, option in ipairs(collectionOptions) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = option
             info.func = function()
                 UIDropDownMenu_SetSelectedName(collectedDropdown, option)
                 UIDropDownMenu_SetText(collectedDropdown, option)
                 RaidMount.currentFilter = option
-                if not RaidMount.isStatsView then 
+                
+                -- Clear filter cache for fresh results
+                if RaidMount.ClearFilterCache then
+                    RaidMount.ClearFilterCache()
+                end
+                
+                if not RaidMount.isStatsView and RaidMount.PopulateUI then 
                     RaidMount.PopulateUI() 
                 end
-                RaidMount.UpdateFilterStatusDisplay()
+                
+                if RaidMount.UpdateFilterStatusDisplay then
+                    RaidMount.UpdateFilterStatusDisplay()
+                end
             end
             UIDropDownMenu_AddButton(info)
         end
     end)
+    
     UIDropDownMenu_SetSelectedName(collectedDropdown, "All")
     UIDropDownMenu_SetText(collectedDropdown, "All")
     UIDropDownMenu_SetWidth(collectedDropdown, 120)
@@ -307,14 +455,10 @@ function RaidMount.CreateFilterDropdowns()
     -- Expansion filter - REPLACED WITH MULTI-SELECT
     local expansionDropdown = CreateFrame("Frame", "RaidMountExpansionDropdown", filterContainer, "UIDropDownMenuTemplate")
     expansionDropdown:SetPoint("TOPLEFT", 140, row1Y)
-    UIDropDownMenu_Initialize(expansionDropdown, function()
-        local expansions = {
-            "All", "Classic", "The Burning Crusade", "Wrath of the Lich King", 
-            "Cataclysm", "Mists of Pandaria", "Warlords of Draenor", "Legion", 
-            "Battle for Azeroth", "Shadowlands", "Dragonflight", "The War Within", "Holiday Event"
-        }
-        
-        for _, expansion in ipairs(expansions) do
+    
+    UIDropDownMenu_Initialize(expansionDropdown, function(self, level)
+        UIDropDownMenu_ClearAll(expansionDropdown)
+        for _, expansion in ipairs(expansionOptions) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = expansion
             info.func = function()
@@ -351,10 +495,13 @@ function RaidMount.CreateFilterDropdowns()
                     end
                 end
                 
-                if not RaidMount.isStatsView then 
+                if not RaidMount.isStatsView and RaidMount.PopulateUI then 
                     RaidMount.PopulateUI() 
                 end
-                RaidMount.UpdateFilterStatusDisplay()
+                
+                if RaidMount.UpdateFilterStatusDisplay then
+                    RaidMount.UpdateFilterStatusDisplay()
+                end
             end
             
             -- Show checkmark for selected expansions
@@ -371,6 +518,7 @@ function RaidMount.CreateFilterDropdowns()
             UIDropDownMenu_AddButton(info)
         end
     end)
+    
     UIDropDownMenu_SetSelectedName(expansionDropdown, "All")
     UIDropDownMenu_SetText(expansionDropdown, "All")
     UIDropDownMenu_SetWidth(expansionDropdown, 140)
@@ -379,23 +527,34 @@ function RaidMount.CreateFilterDropdowns()
     -- Content Type filter
     local contentTypeDropdown = CreateFrame("Frame", "RaidMountContentTypeDropdown", filterContainer, "UIDropDownMenuTemplate")
     contentTypeDropdown:SetPoint("TOPLEFT", 300, row1Y)
-    UIDropDownMenu_Initialize(contentTypeDropdown, function()
-        local options = {"All", "Raid", "Dungeon", "World", "Collector's Bounty"}
-        for _, option in ipairs(options) do
+    
+    UIDropDownMenu_Initialize(contentTypeDropdown, function(self, level)
+        UIDropDownMenu_ClearAll(contentTypeDropdown)
+        for _, option in ipairs(contentTypeOptions) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = option
             info.func = function()
                 UIDropDownMenu_SetSelectedName(contentTypeDropdown, option)
                 UIDropDownMenu_SetText(contentTypeDropdown, option)
                 RaidMount.currentContentTypeFilter = option
-                if not RaidMount.isStatsView then 
+                
+                -- Clear filter cache when changing content type filter
+                if RaidMount.ClearFilterCache then
+                    RaidMount.ClearFilterCache()
+                end
+                
+                if not RaidMount.isStatsView and RaidMount.PopulateUI then 
                     RaidMount.PopulateUI() 
                 end
-                RaidMount.UpdateFilterStatusDisplay()
+                
+                if RaidMount.UpdateFilterStatusDisplay then
+                    RaidMount.UpdateFilterStatusDisplay()
+                end
             end
             UIDropDownMenu_AddButton(info)
         end
     end)
+    
     UIDropDownMenu_SetSelectedName(contentTypeDropdown, "All")
     UIDropDownMenu_SetText(contentTypeDropdown, "All")
     UIDropDownMenu_SetWidth(contentTypeDropdown, 130)
@@ -404,23 +563,29 @@ function RaidMount.CreateFilterDropdowns()
     -- Difficulty filter
     local difficultyDropdown = CreateFrame("Frame", "RaidMountDifficultyDropdown", filterContainer, "UIDropDownMenuTemplate")
     difficultyDropdown:SetPoint("TOPLEFT", 450, row1Y)
-    UIDropDownMenu_Initialize(difficultyDropdown, function()
-        local options = {"All", "Normal", "Heroic", "Mythic", "LFR", "Timewalking"}
-        for _, option in ipairs(options) do
+    
+    UIDropDownMenu_Initialize(difficultyDropdown, function(self, level)
+        UIDropDownMenu_ClearAll(difficultyDropdown)
+        for _, option in ipairs(difficultyOptions) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = option
             info.func = function()
                 UIDropDownMenu_SetSelectedName(difficultyDropdown, option)
                 UIDropDownMenu_SetText(difficultyDropdown, option)
                 RaidMount.currentDifficultyFilter = option
-                if not RaidMount.isStatsView then 
+                
+                if not RaidMount.isStatsView and RaidMount.PopulateUI then 
                     RaidMount.PopulateUI() 
                 end
-                RaidMount.UpdateFilterStatusDisplay()
+                
+                if RaidMount.UpdateFilterStatusDisplay then
+                    RaidMount.UpdateFilterStatusDisplay()
+                end
             end
             UIDropDownMenu_AddButton(info)
         end
     end)
+    
     UIDropDownMenu_SetSelectedName(difficultyDropdown, "All")
     UIDropDownMenu_SetText(difficultyDropdown, "All")
     UIDropDownMenu_SetWidth(difficultyDropdown, 100)
@@ -432,7 +597,9 @@ function RaidMount.CreateFilterDropdowns()
     clearFiltersButton:SetPoint("TOPLEFT", 600, row1Y - 1)
     clearFiltersButton:SetText(RaidMount.L("CLEAR_ALL"))
     clearFiltersButton:SetScript("OnClick", function()
-        RaidMount.ClearAllFilters()
+        if RaidMount.ClearAllFilters then
+            RaidMount.ClearAllFilters()
+        end
     end)
     
     -- Add tooltip to clear button
@@ -499,6 +666,15 @@ function RaidMount.CreateFilterDropdowns()
     
     -- Store the container for easy access
     RaidMount.FilterContainer = filterContainer
+    
+    -- Ensure dropdowns are immediately ready
+    if collectedDropdown and expansionDropdown and contentTypeDropdown and difficultyDropdown then
+        -- Force immediate initialization
+        UIDropDownMenu_SetSelectedName(collectedDropdown, "All")
+        UIDropDownMenu_SetSelectedName(expansionDropdown, "All")
+        UIDropDownMenu_SetSelectedName(contentTypeDropdown, "All")
+        UIDropDownMenu_SetSelectedName(difficultyDropdown, "All")
+    end
 end
 
 -- FILTER AND SORT MOUNT DATA
@@ -511,7 +687,8 @@ function RaidMount.FilterAndSortMountData(mountData)
     local hasSearch = false
     if RaidMount.currentSearch and RaidMount.currentSearch ~= "" then
         searchText = tostring(RaidMount.currentSearch):lower():gsub("^%s+", ""):gsub("%s+$", "")
-        if searchText ~= "" and searchText ~= RaidMount.L("SEARCH_PLACEHOLDER"):lower() then
+        local placeholder = RaidMount.L and RaidMount.L("SEARCH_PLACEHOLDER") or "search mounts, raids, or bosses..."
+        if searchText ~= "" and searchText ~= placeholder:lower() then
             hasSearch = true
             -- Pre-split search words for efficiency
             for word in searchText:gmatch("%S+") do
@@ -524,7 +701,7 @@ function RaidMount.FilterAndSortMountData(mountData)
     
     -- Pre-cache filter values to avoid repeated table lookups
     local currentFilter = RaidMount.currentFilter
-    local currentExpansionFilter = RaidMount.currentExpansionFilter
+    local currentExpansionFilters = RaidMount.currentExpansionFilters
     local currentContentTypeFilter = RaidMount.currentContentTypeFilter
     local currentDifficultyFilter = RaidMount.currentDifficultyFilter
     
@@ -536,19 +713,39 @@ function RaidMount.FilterAndSortMountData(mountData)
             if not mount.collected then
                 includeMount = false
             end
-        elseif currentFilter == "Uncollected" then
+        elseif currentFilter == "Not Collected" then
             if mount.collected then
                 includeMount = false
             end
         end
         
         -- Expansion filter (multi-select)
-        if RaidMount.currentExpansionFilters and next(RaidMount.currentExpansionFilters) then
+        if currentExpansionFilters and next(currentExpansionFilters) then
             local mountExpansion = (mount.expansion or "Unknown"):lower()
             local isIncluded = false
             
-            for expansion in pairs(RaidMount.currentExpansionFilters) do
-                if mountExpansion == expansion:lower() then
+            -- Create expansion name mapping for shortened names
+            local expansionMapping = {
+                ["wotlk"] = "wrath of the lich king",
+                ["wod"] = "warlords of draenor", 
+                ["bfa"] = "battle for azeroth",
+                ["tbc"] = "the burning crusade",
+                ["legion"] = "legion",
+                ["shadowlands"] = "shadowlands",
+                ["dragonflight"] = "dragonflight",
+                ["the war within"] = "the war within",
+                ["classic"] = "classic",
+                ["the burning crusade"] = "the burning crusade",
+                ["cataclysm"] = "cataclysm",
+                ["mists of pandaria"] = "mists of pandaria",
+                ["holiday event"] = "holiday event"
+            }
+            
+            -- Get the full expansion name for comparison
+            local fullExpansionName = expansionMapping[mountExpansion] or mountExpansion
+            
+            for expansion in pairs(currentExpansionFilters) do
+                if fullExpansionName == expansion:lower() then
                     isIncluded = true
                     break
                 end
@@ -562,14 +759,15 @@ function RaidMount.FilterAndSortMountData(mountData)
         -- Content type filter
         if currentContentTypeFilter ~= "All" then
             if currentContentTypeFilter == "Collector's Bounty" then
-                if not mount.collectorsBounty then
+                -- Use the same logic as elsewhere in the codebase
+                if not (mount.collectorsBounty and mount.collectorsBounty ~= false) then
                     includeMount = false
                 end
             else
-            local mountContentType = (mount.contentType or "Unknown"):lower():gsub("%s+", "")
-            local filterContentType = (currentContentTypeFilter or "Unknown"):lower():gsub("%s+", "")
-            if not mountContentType:find(filterContentType, 1, true) then
-                includeMount = false
+                local mountContentType = (mount.contentType or "Unknown"):lower():gsub("%s+", "")
+                local filterContentType = (currentContentTypeFilter or "Unknown"):lower():gsub("%s+", "")
+                if not mountContentType:find(filterContentType, 1, true) then
+                    includeMount = false
                 end
             end
         end
@@ -592,6 +790,11 @@ function RaidMount.FilterAndSortMountData(mountData)
                                 (mount.location or ""):lower() .. " " ..
                                 (mount.expansion or ""):lower() .. " " ..
                                 (mount.difficulty or ""):lower()
+                
+                -- Add Collector's Bounty to searchable text
+                if mount.collectorsBounty and mount.collectorsBounty ~= false then
+                    mountText = mountText .. " collector's bounty bounty collector"
+                end
                 
                 -- Handle different search patterns
                 if searchText:find('"') then
@@ -718,4 +921,76 @@ function RaidMount.UpdateMountCounts()
         bar.collected = collectedMounts
         bar.total = totalMounts
     end
+end
+
+-- Add missing optimized filter function
+function RaidMount.OptimizedFilterAndSort(mountData)
+    if not mountData then return {} end
+    
+    -- Use the existing filter function but with better performance
+    return RaidMount.FilterAndSortMountData(mountData)
+end
+
+-- Add missing combined mount data function
+function RaidMount.GetCombinedMountData()
+    -- Ensure the addon is initialized before calling
+    if not RaidMount.GetFormattedMountData then
+        print("RaidMount: GetFormattedMountData not available yet, addon may not be fully loaded")
+        return {}
+    end
+    
+    -- Ensure initialization
+    if RaidMount.EnsureInitialized then
+        RaidMount.EnsureInitialized()
+    end
+    
+    -- Use the existing formatted mount data function
+    return RaidMount.GetFormattedMountData()
 end 
+
+-- Test function to verify dropdown functionality
+function RaidMount.TestDropdowns()
+    print("=== Testing Dropdown Functionality ===")
+    
+    if RaidMount.CollectedDropdown then
+        print("Collection dropdown found")
+        UIDropDownMenu_Initialize(RaidMount.CollectedDropdown, function(self, level)
+            local options = {"All", "Collected", "Not Collected"}
+            for _, option in ipairs(options) do
+                local info = UIDropDownMenu_CreateInfo()
+                info.text = option
+                info.func = function()
+                    print("Collection dropdown clicked: " .. option)
+                    UIDropDownMenu_SetSelectedName(RaidMount.CollectedDropdown, option)
+                    UIDropDownMenu_SetText(RaidMount.CollectedDropdown, option)
+                end
+                UIDropDownMenu_AddButton(info)
+            end
+        end)
+    else
+        print("Collection dropdown NOT found")
+    end
+    
+    if RaidMount.ExpansionDropdown then
+        print("Expansion dropdown found")
+    else
+        print("Expansion dropdown NOT found")
+    end
+    
+    if RaidMount.ContentTypeDropdown then
+        print("Content type dropdown found")
+    else
+        print("Content type dropdown NOT found")
+    end
+    
+    if RaidMount.DifficultyDropdown then
+        print("Difficulty dropdown found")
+    else
+        print("Difficulty dropdown NOT found")
+    end
+    
+    print("=== Dropdown Test Complete ===")
+end
+
+-- Export the test function
+RaidMount.TestDropdowns = RaidMount.TestDropdowns 

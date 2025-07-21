@@ -105,6 +105,17 @@ local ruRULocale = {
     ["ACTIVE_FILTERS"] = "Активные фильтры: %s",
     ["NO_FILTERS_ACTIVE"] = "Нет активных фильтров - показывать все маунты",
     ["NO_MOUNTS_FOUND"] = "Маунты, соответствующие вашим критериям, не найдены.",
+    ["NEW_MOUNT_COLLECTED"] = "Новый маунт получен! ID маунта: %d",
+    ["DIFFICULTY_SET"] = "%s установлен на %s",
+    ["TOMTOM_WAYPOINT_SET"] = "TomTom точка пути установлена для %s",
+    ["COULD_NOT_FIND_MAP_ID"] = "Не удалось найти ID карты для зоны: %s",
+    ["WAYPOINT_SET"] = "Точка пути установлена для %s в %s (%.1f, %.1f)",
+    ["MOUNT_LOCATION"] = "Расположение %s: %s (%s) - %.1f, %.1f",
+    ["INSTALL_TOMTOM"] = "Установите аддон TomTom для лучшей поддержки точек пути между дополнениями",
+    ["TRAVEL_GUIDE"] = "Путеводитель RaidMount: %s",
+    ["CROSS_EXPANSION_TRAVEL"] = "Путешествие между дополнениями: %s -> %s (%s)",
+    ["TRAVEL_NEEDED"] = "Требуется путешествие: %s -> %s (%s)",
+    ["INSTANCE_EXPANSION_INFO"] = "Подземелье: %s | Дополнение: %s",
     
     -- Errors
     ["ERROR_HEADERS_NOT_INIT"] = "RaidMount: Предупреждение - HeaderTexts не инициализирован",

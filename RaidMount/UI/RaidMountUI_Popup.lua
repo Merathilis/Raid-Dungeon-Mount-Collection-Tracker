@@ -94,11 +94,9 @@ local function CreateMountEntry(parent, mountData, yOffset)
     entry.nameText:SetWidth(180)
     entry.nameText:SetHeight(24)
     entry.nameText:SetWordWrap(false)
-    if mountData.collected then
-        entry.nameText:SetText("|cFF00FF00" .. (mountData.mountName or "Unknown Mount") .. "|r")
-    else
-        entry.nameText:SetText("|cFFFFFFFF" .. (mountData.mountName or "Unknown Mount") .. "|r")
-    end
+    -- Use unified mount coloring system with quality-based colors
+    local nameColor = RaidMount.GetMountNameColor(mountData)
+    entry.nameText:SetText(nameColor .. (mountData.mountName or "Unknown Mount") .. "|r")
 
     -- Tick/cross icon (next to name)
     entry.statusIcon = entry:CreateTexture(nil, "OVERLAY")
@@ -201,13 +199,7 @@ local function UpdatePopupContent()
     popupFrame.zoneText:SetText(currentZone)
 
     local mountCount = #currentZoneMounts
-    local collectedCount = 0
-    for _, mount in ipairs(currentZoneMounts) do
-        if mount.collected then
-            collectedCount = collectedCount + 1
-        end
-    end
-    popupFrame.countText:SetText(string.format("%d mounts available (%d collected)", mountCount, collectedCount))
+    popupFrame.countText:SetText(string.format("%d uncollected mounts available", mountCount))
 
     -- Create mount entries as direct children
     local yOffset = -65 -- Start below the countText (adjust as needed)
@@ -268,7 +260,10 @@ local function CheckZoneForMounts()
         if WORLD_BOSS_MOUNT_IDS[coordKey] then
             local coords = coordKey and RaidMount.Coordinates and RaidMount.Coordinates[coordKey]
             if coords and coords.zone == currentZone then
-                table.insert(currentZoneMounts, mountData)
+                -- Only add mounts that haven't been collected
+                if not mountData.collected then
+                    table.insert(currentZoneMounts, mountData)
+                end
             end
         end
     end

@@ -1,537 +1,179 @@
 local addonName, RaidMount = ...
 RaidMount = RaidMount or {}
 
+local ADDON_VERSION = "21.07.25.35"
 local RAIDMOUNT_PREFIX = "|cFF33CCFFRaid|r|cFFFF0000Mount|r"
 
+-- Performance optimization: Use local variables for frequently accessed functions
+local print = print
+local time = time
+local date = date
+local UnitName = UnitName
+local GetRealmName = GetRealmName
+local UnitClass = UnitClass
+local GetNumSavedInstances = GetNumSavedInstances
+local GetSavedInstanceInfo = GetSavedInstanceInfo
+local C_Timer = C_Timer
+local CreateFrame = CreateFrame
+
+-- Set global version for other modules
+RaidMount.ADDON_VERSION = ADDON_VERSION
+
 local function PrintAddonMessage(message, isError)
+    if message then
+        print(RAIDMOUNT_PREFIX .. ": " .. message)
+    end
 end
 
+-- Set global print function for other modules
+RaidMount.PrintAddonMessage = PrintAddonMessage
 
+-- Initialize SavedVariables with proper structure
 RaidMountAttempts = RaidMountAttempts or {}
 
-local ADDON_VERSION = "15.07.25.30"
-PrintAddonMessage("Updated to version " .. ADDON_VERSION)
-
-local function ScanExistingMountCollection()
-    PrintAddonMessage(RaidMount.L("SCANNING_FIRST_TIME"))
-    RaidMount.RefreshMountCollection()
-end
-
-
+-- Performance optimization: Cache player info
 local cachedPlayerInfo = nil
 local function GetCachedPlayerInfo()
     if not cachedPlayerInfo then
-        cachedPlayerInfo = UnitName("player") .. "-" .. GetRealmName()
+        local characterName = UnitName("player")
+        local realmName = GetRealmName()
+        
+        -- Normalize to prevent duplicates when realm info is inconsistent
+        if not realmName or realmName == "Unknown" or realmName == "" then
+            cachedPlayerInfo = characterName
+        else
+            cachedPlayerInfo = characterName .. "-" .. realmName
+        end
     end
     return cachedPlayerInfo
 end
 
--- Session tracking
-local currentSessionID = 1
-local lastSessionTime = 0
-local SESSION_TIMEOUT = 3600 -- 1 hour timeout for new session
-
--- Initialize session tracking
-local function InitializeSessionTracking()
-    if not RaidMountSaved then
-        RaidMountSaved = {}
+-- NEW: Normalize character ID to prevent duplicates
+local function NormalizeCharacterID(characterName, realmName)
+    if not characterName then return nil end
+    
+    -- If realm is nil, unknown, or empty, just use character name
+    if not realmName or realmName == "Unknown" or realmName == "" then
+        return characterName
     end
-    if not RaidMountSaved.currentSessionID then
-        RaidMountSaved.currentSessionID = 1
-    end
-    if not RaidMountSaved.lastSessionTime then
-        RaidMountSaved.lastSessionTime = 0
-    end
-    currentSessionID = RaidMountSaved.currentSessionID
-    lastSessionTime = RaidMountSaved.lastSessionTime
+    
+    return characterName .. "-" .. realmName
 end
 
--- Check if we need a new session
-local function CheckNewSession()
-    local currentTime = time()
-    if currentTime - lastSessionTime > SESSION_TIMEOUT then
-        currentSessionID = currentSessionID + 1
-        lastSessionTime = currentTime
-        RaidMountSaved.currentSessionID = currentSessionID
-        RaidMountSaved.lastSessionTime = lastSessionTime
+-- Set global function for other modules
+RaidMount.GetCachedPlayerInfo = GetCachedPlayerInfo
+RaidMount.NormalizeCharacterID = NormalizeCharacterID
+
+-- Unified Mount Color System - Quality-based without API calls
+RaidMount.MOUNT_COLORS = {
+    -- Quality-based colors (same for all mounts regardless of collection status)
+    COMMON = "|cFFFFFFFF",      -- White for common quality
+    UNCOMMON = "|cFF1EFF00",    -- Green for uncommon quality
+    RARE = "|cFF0070DD",        -- Blue for rare quality
+    EPIC = "|cFFA335EE",        -- Purple for epic quality
+    LEGENDARY = "|cFFFF8000",   -- Orange for legendary quality
+    
+    -- Default fallback
+    DEFAULT = "|cFFA335EE",     -- Default to epic purple
+}
+
+-- Unified function to get mount collection status
+function RaidMount.GetMountCollectionStatus(mountData)
+    -- Use cached data first for performance
+    if mountData.collected ~= nil then
+        return mountData.collected
     end
+    
+    -- Fallback to live check if cache is missing
+    if (mountData.mountID or mountData.spellID) and RaidMount.PlayerHasMount then
+        local hasMount = RaidMount.PlayerHasMount(mountData.mountID, mountData.itemID, mountData.spellID)
+        -- Cache the result to avoid repeated API calls
+        mountData.collected = hasMount
+        return hasMount
+    end
+    
+    return false
 end
 
-local function InitializeAddon()
-    if not RaidMount.mountInstances or not RaidMount.Coordinates then
-        C_Timer.After(1, InitializeAddon)
-        return
-    end
-
-    if not RaidMount.PlayerHasMount or not RaidMount.GetRaidLockout then
-        C_Timer.After(1, InitializeAddon)
-        return
-    end
-
-    if not RaidMountSaved then RaidMountSaved = {} end
-    if RaidMountSaved.enhancedTooltip == nil then
-        RaidMountSaved.enhancedTooltip = true
-    end
-    RaidMountTooltipEnabled = RaidMountSaved.enhancedTooltip
-    
-    -- Initialize mount drop sound setting
-    if not RaidMountSettings then RaidMountSettings = {} end
-    if RaidMountSettings.mountDropSound == nil then
-        RaidMountSettings.mountDropSound = true
-    end
-    
-    -- Initialize session tracking
-    InitializeSessionTracking()
-    
-    -- Ensure RaidMountAttempts is properly initialized
-    if not RaidMountAttempts then
-        RaidMountAttempts = {}
-    end
-    
-    -- Initialize character tracking
-    if not RaidMountSaved.loggedCharacters then
-        RaidMountSaved.loggedCharacters = {}
-    end
-    
-    -- Track current character
-    local currentCharacter = GetCachedPlayerInfo()
-    if currentCharacter then
-        RaidMountSaved.loggedCharacters[currentCharacter] = {
-            lastLogin = time(),
-            class = select(2, UnitClass("player")),
-            realm = GetRealmName()
-        }
-    end
-    
-    -- Initialize historical data from statistics
-    RaidMount.InitializeFromStatistics()
-    
-    ScanExistingMountCollection()
-    PrintAddonMessage(RaidMount.L("LOADED_MESSAGE", ADDON_VERSION))
-end
-
-
-local function GetStatisticValue(statisticId)
-    if not statisticId then return 0 end
-    
-    local value = GetStatistic(statisticId)
-    if value and value ~= "--" and tonumber(value) then
-        return tonumber(value)
-    end
-    return 0
-end
-
-
-function RaidMount.InitializeFromStatistics()
-    local initializedCount = 0
-    for _, mount in ipairs(RaidMount.mountInstances or {}) do
-        local trackingKey = mount.spellID
-        if trackingKey then
-            local attemptData = RaidMountAttempts[trackingKey]
-            if not attemptData then
-                attemptData = {
-                    total = 0,
-                    characters = {},
-                    lastAttempt = nil,
-                    collected = false,
-                    statisticsInitialized = false
-                }
-                RaidMountAttempts[trackingKey] = attemptData
-            end
-            
-            local statisticsToCheck = mount.statisticIds
-            
-            if mount.statisticIdsByDifficulty then
-                statisticsToCheck = {}
-                for _, diffStats in pairs(mount.statisticIdsByDifficulty) do
-                    for _, statId in ipairs(diffStats) do
-                        table.insert(statisticsToCheck, statId)
-                    end
-                end
-            end
-            
-            if statisticsToCheck and not attemptData.statisticsInitialized then
-                local maxAttempts = 0
-                local usedStatId = nil
-                
-                for _, statId in ipairs(statisticsToCheck) do
-                    local statValue = GetStatisticValue(statId)
-                    if statValue > maxAttempts then
-                        maxAttempts = statValue
-                        usedStatId = statId
-                    end
-                end
-                
-                if maxAttempts > (attemptData.total or 0) then
-                    attemptData.total = maxAttempts
-                    attemptData.statisticsInitialized = true
-                    attemptData.statisticsSource = {
-                        statId = usedStatId,
-                        lastUpdated = time(),
-                        source = "blizzard_statistics"
-                    }
-                    initializedCount = initializedCount + 1
-                end
-            end
-        end
-    end
-    
-    if initializedCount > 0 then
-        PrintAddonMessage("Initialized " .. initializedCount .. " mounts from statistics")
-    end
-end
-
-function RaidMount.VerifyStatistics()
-    local verifiedCount = 0
-    local correctedCount = 0
-    local corrections = {}
-    
-    for _, mount in ipairs(RaidMount.mountInstances or {}) do
-        local attemptData = RaidMountAttempts[mount.spellID]
-        local statisticsToCheck = mount.statisticIds
-        
-        if mount.statisticIdsByDifficulty then
-            statisticsToCheck = {}
-            for _, diffStats in pairs(mount.statisticIdsByDifficulty) do
-                for _, statId in ipairs(diffStats) do
-                    table.insert(statisticsToCheck, statId)
-                end
-            end
-        end
-        
-        if attemptData and statisticsToCheck then
-            local maxStatValue = 0
-            local usedStatId = nil
-            
-            for _, statId in ipairs(statisticsToCheck) do
-                local statValue = GetStatisticValue(statId)
-                if statValue > maxStatValue then
-                    maxStatValue = statValue
-                    usedStatId = statId
-                end
-            end
-            
-            verifiedCount = verifiedCount + 1
-            
-            if maxStatValue > (attemptData.total or 0) then
-                local oldTotal = attemptData.total or 0
-                attemptData.total = maxStatValue
-                attemptData.statisticsSource = {
-                    statId = usedStatId,
-                    lastUpdated = time(),
-                    source = "blizzard_statistics"
-                }
-                correctedCount = correctedCount + 1
-                
-                table.insert(corrections, {
-                    mountName = mount.mountName,
-                    oldTotal = oldTotal,
-                    newTotal = maxStatValue,
-                    statId = usedStatId
-                })
-            end
-        end
-    end
-    
-    return {
-        verified = verifiedCount,
-        corrected = correctedCount,
-        corrections = corrections
+-- Determine mount quality based on mount data (no API calls)
+function RaidMount.GetMountQuality(mountData)
+    -- Legendary mounts (very rare, special sources)
+    local legendaryMounts = {
+        -- Mythic-only mounts
+        "Invincible", "Ashes of Al'ar", "Mimiron's Head", "Life-Binder's Handmaiden",
+        "Kor'kron Juggernaut", "Ironhoof Destroyer", "Felsteel Annihilator", 
+        "Hellfire Infernal", "Shackled Ur'zul", "Glacial Tidestorm", "Ny'alotha Allseer",
+        "Vengeance", "Zereth Overseer", "Anu'relos, Flame's Guidance", "Ascendant Skyrazor",
+        -- TCG and Promotional
+        "Swift Spectral Tiger", "Magic Rooster Egg", "Tyrael's Charger"
     }
+    
+    -- Rare mounts (dungeon drops, some raid mounts)
+    local rareMounts = {
+        "Rivendare's Deathcharger", "Raven Lord", "Blue Proto-Drake", "Green Proto-Drake",
+        "Vitreous Stone Drake", "Drake of the North Wind", "Swift White Hawkstrider"
+    }
+    
+    -- Check mount name for quality
+    local mountName = mountData.mountName or ""
+    
+    for _, legendary in ipairs(legendaryMounts) do
+        if mountName:find(legendary) then
+            return "legendary"
+        end
+    end
+    
+    for _, rare in ipairs(rareMounts) do
+        if mountName:find(rare) then
+            return "rare"
+        end
+    end
+    
+    -- Check by content type and difficulty
+    if mountData.difficulty then
+        local diff = mountData.difficulty:lower()
+        if diff:find("mythic") then
+            return "legendary"
+        elseif diff:find("heroic") then
+            return "epic"
+        elseif diff:find("normal") then
+            return "rare"
+        end
+    end
+    
+    -- Check by content type
+    if mountData.contentType then
+        local content = mountData.contentType:lower()
+        if content:find("raid") then
+            return "epic" -- Most raid mounts are epic
+        elseif content:find("dungeon") then
+            return "rare" -- Most dungeon mounts are rare
+        elseif content:find("world") then
+            return "rare" -- World boss mounts are rare
+        end
+    end
+    
+    -- Default to epic for raid mounts
+    return "epic"
 end
 
-local function RecordAttemptWithStatistics(mount, characterID, currentTime)
-    local trackingKey = mount.spellID
-    local attemptData = RaidMountAttempts[trackingKey]
+-- Unified function to get mount name color
+function RaidMount.GetMountNameColor(mountData, useSimpleColors)
+    -- Quality-based coloring only (collection status shown by green tick icon)
+    local quality = RaidMount.GetMountQuality(mountData)
     
-    if type(attemptData) ~= "table" then
-        attemptData = { 
-            total = 0, 
-            characters = {},
-            lastAttempt = nil,
-            collected = false,
-            statisticsInitialized = false
-        }
-        RaidMountAttempts[trackingKey] = attemptData
-    end
-
-    local hasMount = RaidMount.PlayerHasMount(mount.MountID, mount.itemID, mount.spellID)
-    if hasMount and not attemptData.collected then
-        attemptData.collected = true
-        PlaySound(8959, "Master")
-    end
-
-    attemptData.total = (attemptData.total or 0) + 1
-    
-    -- Enhanced character data structure with source tracking
-    if type(attemptData.characters[characterID]) == "number" then
-        -- Migrate old format to new format
-        local oldCount = attemptData.characters[characterID]
-        attemptData.characters[characterID] = {
-            count = oldCount + 1,
-            lastUpdated = currentTime,
-            source = "addon_tracking"
-        }
-    elseif type(attemptData.characters[characterID]) == "table" then
-        -- New format
-        attemptData.characters[characterID].count = (attemptData.characters[characterID].count or 0) + 1
-        attemptData.characters[characterID].lastUpdated = currentTime
-        attemptData.characters[characterID].source = "addon_tracking"
+    if quality == "legendary" then
+        return RaidMount.MOUNT_COLORS.LEGENDARY
+    elseif quality == "epic" then
+        return RaidMount.MOUNT_COLORS.EPIC
+    elseif quality == "rare" then
+        return RaidMount.MOUNT_COLORS.RARE
+    elseif quality == "uncommon" then
+        return RaidMount.MOUNT_COLORS.UNCOMMON
+    elseif quality == "common" then
+        return RaidMount.MOUNT_COLORS.COMMON
     else
-        -- First time for this character
-        attemptData.characters[characterID] = {
-            count = 1,
-            lastUpdated = currentTime,
-            source = "addon_tracking"
-        }
-    end
-    
-    attemptData.classes = attemptData.classes or {}
-    attemptData.classes[characterID] = select(2, UnitClass("player"))
-    attemptData.lastAttemptDates = attemptData.lastAttemptDates or {}
-    attemptData.lastAttemptDates[characterID] = date("%d/%m/%y")
-    attemptData.lastAttempt = currentTime
-    
-    local statisticsToCheck = mount.statisticIds
-    if mount.statisticIdsByDifficulty then
-        local difficultyID = select(3, GetInstanceInfo())
-        local difficultyName = "Normal"
-        if difficultyID == 17 then difficultyName = "LFR"
-        elseif difficultyID == 14 then difficultyName = "Normal"
-        elseif difficultyID == 15 then difficultyName = "Heroic"
-        elseif difficultyID == 16 then difficultyName = "Mythic"
-        end
-        
-        if mount.statisticIdsByDifficulty[difficultyName] then
-            statisticsToCheck = mount.statisticIdsByDifficulty[difficultyName]
-        end
-    end
-    
-    if statisticsToCheck then
-        C_Timer.After(3, function()
-            local maxStatValue = 0
-            for _, statId in ipairs(statisticsToCheck) do
-                local statValue = GetStatisticValue(statId)
-                if statValue > maxStatValue then
-                    maxStatValue = statValue
-                end
-            end
-            
-            if maxStatValue > attemptData.total then
-                attemptData.total = maxStatValue
-                attemptData.statisticsSource = {
-                    statId = nil, -- Will be set by the highest stat ID
-                    lastUpdated = time(),
-                    source = "blizzard_statistics"
-                }
-            end
-        end)
-    end
-end
-
--- Initialize Attempts After Player Login
-local function ShowVersionMessage()
-    print("|cFF33CCFFRaid|r|cFFFF0000Mount|r v" .. ADDON_VERSION)
-end
-
-local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("PLAYER_LOGIN")
-eventFrame:RegisterEvent("ADDON_LOADED")
-eventFrame:RegisterEvent("UPDATE_EXPANSION_LEVEL")
-eventFrame:SetScript("OnEvent", function(self, event, addonName)
-    if event == "ADDON_LOADED" and addonName == "RaidMount" then
-        InitializeAddon()
-    elseif event == "PLAYER_LOGIN" then
-        ShowVersionMessage()
-    end
-end)
-
--- Enhanced Boss Kill Tracking
-local bossKillFrame = CreateFrame("Frame")
-bossKillFrame:RegisterEvent("BOSS_KILL")
-bossKillFrame:RegisterEvent("ENCOUNTER_END")
-bossKillFrame:RegisterEvent("NEW_MOUNT_ADDED")
-bossKillFrame:RegisterEvent("LOOT_OPENED")
-
-bossKillFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "NEW_MOUNT_ADDED" or event == "LOOT_OPENED" then
-        return
-    end
-
-    local encounterName, success, difficultyID
-    if event == "ENCOUNTER_END" then
-        local encounterID, encounterName_temp, difficultyID_temp, groupSize, success_temp = ...
-        encounterName = encounterName_temp
-        difficultyID = difficultyID_temp
-        success = success_temp
-        if not success then return end
-    else
-        return -- Ignore BOSS_KILL and any other events for attempt tracking
-    end
-
-    local characterID = GetCachedPlayerInfo()
-    local currentTime = time()
-    local hasFoundMatch = false
-
-    -- Convert difficulty ID to string for comparison
-    local difficultyName = "Normal"
-    if difficultyID == 17 then difficultyName = "LFR"
-    elseif difficultyID == 14 then difficultyName = "Normal"
-    elseif difficultyID == 15 then difficultyName = "Heroic"
-    elseif difficultyID == 16 then difficultyName = "Mythic"
-    end
-
-    for _, mount in ipairs(RaidMount.mountInstances or {}) do
-        local bossToMatch = mount.bossName
-        -- Check if this mount has difficulty-specific boss names
-        if mount.bossNameByDifficulty and mount.bossNameByDifficulty[difficultyName] then
-            bossToMatch = mount.bossNameByDifficulty[difficultyName]
-        end
-        if bossToMatch == encounterName then
-            hasFoundMatch = true
-            RecordAttemptWithStatistics(mount, characterID, currentTime)
-        end
-    end
-
-    if hasFoundMatch then
-        -- Encounter processed successfully - invalidate static cache since attempt data changed
-        if RaidMount.InvalidateStaticData then
-            RaidMount.InvalidateStaticData()
-        end
-    end
-end)
-
--- Get current session ID
-function RaidMount.GetCurrentSessionID()
-    CheckNewSession()
-    return currentSessionID
-end
-
--- Record Attempt (Enhanced with session tracking)
-function RaidMount.RecordBossAttempt(encounterName, difficultyName)
-    -- Get current difficulty if not provided
-    if not difficultyName then
-        local difficultyID = select(3, GetInstanceInfo())
-        difficultyName = "Normal"
-        if difficultyID == 17 then difficultyName = "LFR"
-        elseif difficultyID == 14 then difficultyName = "Normal"
-        elseif difficultyID == 15 then difficultyName = "Heroic"
-        elseif difficultyID == 16 then difficultyName = "Mythic"
-        end
-    end
-    if not encounterName then return end
-    
-    CheckNewSession()
-    
-    for _, mount in ipairs(RaidMount.mountInstances or {}) do
-        local bossToMatch = mount.bossName
-        
-        -- Check if this mount has difficulty-specific boss names
-        if mount.bossNameByDifficulty and mount.bossNameByDifficulty[difficultyName] then
-            bossToMatch = mount.bossNameByDifficulty[difficultyName]
-        end
-        
-        if bossToMatch and bossToMatch == encounterName then
-            local trackingKey = mount.spellID
-            if not RaidMountAttempts[trackingKey] then
-                RaidMountAttempts[trackingKey] = {
-                    total = 0,
-                    characters = {},
-                    lastAttempt = nil,
-                    collected = false,
-                    sessionHistory = {} -- New: session-based attempt history
-                }
-            end
-            
-            local charKey = UnitName("player") .. "-" .. GetRealmName()
-            RaidMountAttempts[trackingKey].total = (RaidMountAttempts[trackingKey].total or 0) + 1
-            RaidMountAttempts[trackingKey].characters[charKey] = (RaidMountAttempts[trackingKey].characters[charKey] or 0) + 1
-            
-            -- Add/update class info for this character
-            RaidMountAttempts[trackingKey].classes = RaidMountAttempts[trackingKey].classes or {}
-            RaidMountAttempts[trackingKey].classes[charKey] = select(2, UnitClass("player")) -- e.g., "DRUID"
-            
-            -- Add/update per-character last attempt date in UK format
-            RaidMountAttempts[trackingKey].lastAttemptDates = RaidMountAttempts[trackingKey].lastAttemptDates or {}
-            RaidMountAttempts[trackingKey].lastAttemptDates[charKey] = date("%d/%m/%y")
-            RaidMountAttempts[trackingKey].lastAttempt = time()
-            
-            -- Session history tracking
-            if not RaidMountAttempts[trackingKey].sessionHistory then
-                RaidMountAttempts[trackingKey].sessionHistory = {}
-            end
-            RaidMountAttempts[trackingKey].sessionHistory[currentSessionID] = (RaidMountAttempts[trackingKey].sessionHistory[currentSessionID] or 0) + 1
-            
-            if RaidMount.PopulateUI then RaidMount.PopulateUI() end
-        end
-    end
-end
-
--- Get Attempt Count (with backward compatibility)
-function RaidMount.GetAttempts(mount)
-    local trackingKey
-    if type(mount) == "table" then
-        trackingKey = mount.spellID  -- Use Spell ID for new system
-    else
-        trackingKey = mount  -- Legacy: direct ID passed
-    end
-    
-    local attempts = RaidMountAttempts[trackingKey]
-    if type(attempts) == "number" then
-        return attempts
-    elseif type(attempts) == "table" then
-        return attempts.total or 0
-    end
-    return 0
-end
-
--- Get Character-specific attempts
-function RaidMount.GetCharacterAttempts(mount, characterID)
-    local trackingKey
-    if type(mount) == "table" then
-        trackingKey = mount.spellID  -- Use Spell ID for new system
-    else
-        trackingKey = mount  -- Legacy: direct ID passed
-    end
-    
-    local attempts = RaidMountAttempts[trackingKey]
-    if type(attempts) == "table" and attempts.characters then
-        return attempts.characters[characterID] or 0
-    end
-    return 0
-end
-
--- Reset Attempts
-function RaidMount.ResetAttempts(mount)
-    if mount then
-        local trackingKey
-        if type(mount) == "table" then
-            trackingKey = mount.spellID  -- Use Spell ID for new system
-        else
-            trackingKey = mount  -- Legacy: direct ID passed
-        end
-        
-        RaidMountAttempts[trackingKey] = {
-            total = 0,
-            characters = {},
-            lastAttempt = nil,
-            collected = false
-        }
-    else
-        -- Reset all attempts
-        for id, _ in pairs(RaidMountAttempts) do
-            RaidMountAttempts[id] = {
-                total = 0,
-                characters = {},
-                lastAttempt = nil,
-                collected = false
-            }
-        end
-    end
-    
-    -- Invalidate static cache since attempt data changed
-    if RaidMount.InvalidateStaticData then
-        RaidMount.InvalidateStaticData()
+        return RaidMount.MOUNT_COLORS.DEFAULT
     end
 end
 
@@ -539,7 +181,7 @@ end
 function RaidMount.GetDifficultyColor(difficulty)
     local colors = {
         ["Mythic"] = "|cFFFF8000",
-        ["Heroic"] = "|cFF0070DD", 
+        ["Heroic"] = "|cFF0070DD",
         ["Normal"] = "|cFFFFFFFF",
         ["LFR"] = "|cFF1EFF00"
     }
@@ -552,16 +194,77 @@ function RaidMount.GetLockoutColor(raidName)
     return (resetTime == "No lockout") and "|cFF00FF00" or "|cFFFF0000"
 end
 
+-- Check if player has a mount (missing function that was being referenced)
+function RaidMount.PlayerHasMount(mountID, itemID, spellID)
+    -- This function might be causing performance issues - let's optimize it
+    
+    -- Try direct Mount ID lookup first (most efficient)
+    if mountID and C_MountJournal then
+        local success, name, mountSpellID, icon, active, isUsable, sourceType, isFavorite, isFactionSpecific, faction, hideOnChar, isCollected = pcall(C_MountJournal.GetMountInfoByID, mountID)
+        if success and name then
+            return isCollected == true
+        end
+    end
+    
+    -- Fallback: check if spell is known (for older mounts)
+    if spellID and IsSpellKnown then
+        return IsSpellKnown(spellID)
+    end
+    
+    return false
+end
+
+-- Refresh mount collection data (missing function that was being referenced)
+function RaidMount.RefreshMountCollection()
+    if not RaidMount.mountInstances then
+        return
+    end
+    
+    -- Update collection status for all mounts
+    for _, mount in ipairs(RaidMount.mountInstances) do
+        if mount.MountID or mount.spellID then
+            local hasMount = RaidMount.PlayerHasMount(mount.MountID, mount.itemID, mount.spellID)
+            
+            -- Update the mount data with current collection status
+            mount.collected = hasMount
+            
+            -- Update saved data
+            local trackingKey = mount.spellID
+            if trackingKey then
+                if not RaidMountAttempts[trackingKey] then
+                    RaidMountAttempts[trackingKey] = {
+                        total = 0,
+                        characters = {},
+                        lastAttempt = nil,
+                        collected = false
+                    }
+                end
+                RaidMountAttempts[trackingKey].collected = hasMount
+            end
+        end
+    end
+end
+
 -- Enhanced Format Mount Data for UI
 function RaidMount.GetFormattedMountData()
+    -- Ensure addon is initialized
+    if not RaidMount.mountInstances then
+        print("RaidMount: Mount data not loaded yet")
+        return {}
+    end
+    
+    if #RaidMount.mountInstances == 0 then
+        return {}
+    end
+    
     local formattedData = {}
     for _, mount in ipairs(RaidMount.mountInstances) do
         local attempts = RaidMount.GetAttempts(mount)
-        local trackingKey = mount.spellID  -- Use Spell ID as primary key
+        local trackingKey = mount.spellID -- Use Spell ID as primary key
         local attemptData = RaidMountAttempts[trackingKey]
         local lastAttempt = nil
         local hasMount = false
-        
+
         -- Check collection status from stored data first, then live check
         if attemptData and type(attemptData) == "table" then
             hasMount = attemptData.collected or false
@@ -569,16 +272,16 @@ function RaidMount.GetFormattedMountData()
                 lastAttempt = date("%d/%m/%y", attemptData.lastAttempt)
             end
         end
-        
+
         -- Double-check with live mount journal if not marked as collected
-        if not hasMount then
+        if not hasMount and RaidMount.PlayerHasMount then
             hasMount = RaidMount.PlayerHasMount(mount.MountID, mount.itemID, mount.spellID)
             -- Update stored data if we found it's actually collected
             if hasMount and attemptData then
                 attemptData.collected = true
             end
         end
-        
+
         local lockoutInfo = RaidMount.GetRaidLockout(mount.raidName)
         table.insert(formattedData, {
             raidName = mount.raidName or RaidMount.L("UNKNOWN"),
@@ -593,10 +296,20 @@ function RaidMount.GetFormattedMountData()
             collected = hasMount,
             attempts = attempts,
             lastAttempt = lastAttempt,
-            mountID = mount.MountID,
+            mountID = mount.MountID, -- Note: MountData uses MountID (capital)
             spellID = mount.spellID,
             itemID = mount.itemID,
-            type = "Raid"
+            type = "Raid",
+            -- Add difficulty information for the new UI feature
+            DifficultyIDs = mount.DifficultyIDs,
+            SharedDifficulties = mount.SharedDifficulties,
+            contentType = mount.contentType,
+            collectorsBounty = mount.collectorsBounty,
+            -- Add MapID and InstanceID for lockout matching
+            MapID = mount.MapID,
+            mapID = mount.MapID, -- Also add lowercase version for compatibility
+            InstanceID = mount.InstanceID,
+            instanceID = mount.InstanceID -- Also add lowercase version for compatibility
         })
     end
     return formattedData
@@ -604,331 +317,10 @@ end
 
 
 
--- Slash command handler
-SLASH_RAIDMOUNT1 = "/rm"
 
-SlashCmdList["RAIDMOUNT"] = function(msg)
-    local command = msg:lower():trim()
-    
-    if command == "" then
-        RaidMount.ShowUI()
-    elseif command == "help" then
-        RaidMount.ShowHelpCommands()
-    elseif command == "stats" then
-        RaidMount.ShowStatsCommand()
-    elseif command == "reset" then
-        RaidMount.ResetCommand()
-    elseif command == "refresh" then
-        RaidMount.RefreshCommand()
-    elseif command == "verify" then
-        RaidMount.VerifyCommand()
-    elseif command == "debugdata" then
-        RaidMount.DebugDataCommand()
-    elseif command == "debug" or command == "debugcoords" then
-        if RaidMount.DebugCoordinates then
-            RaidMount.DebugCoordinates()
-        else
-            print("Debug function not available")
-        end
-    elseif command == "version" then
-        print("|cFF33CCFFRaid|r|cFFFF0000Mount|r v" .. ADDON_VERSION)
-    elseif command == "sound" then
-        if not RaidMountSettings then RaidMountSettings = {} end
-        RaidMountSettings.mountDropSound = not RaidMountSettings.mountDropSound
-        local status = RaidMountSettings.mountDropSound and "enabled" or "disabled"
-        PrintAddonMessage("Mount drop sound " .. status, false)
-    else
-        PrintAddonMessage(RaidMount.L("UNKNOWN_COMMAND", command), true)
-    end
-end
 
--- Show help commands
-function RaidMount.ShowHelpCommands()
-    PrintAddonMessage(RaidMount.L("HELP_TITLE"), false)
-    print("|cFFFFFF00/rm|r - " .. RaidMount.L("HELP_OPEN"))
-    print("|cFFFFFF00/rm help|r - " .. RaidMount.L("HELP_HELP"))
-    print("|cFFFFFF00/rm stats|r - " .. RaidMount.L("HELP_STATS"))
-    print("|cFFFFFF00/rm reset|r - " .. RaidMount.L("HELP_RESET"))
-    print("|cFFFFFF00/rm refresh|r - " .. RaidMount.L("HELP_REFRESH"))
-    print("|cFFFFFF00/rm verify|r - " .. RaidMount.L("HELP_VERIFY"))
-    print("|cFFFFFF00/rm sound|r - Toggle mount drop sound notifications")
-    print("|cFFFFFF00/rm debugdata|r - Debug saved attempt data")
-end
 
--- Debug data command
-function RaidMount.DebugDataCommand()
-    PrintAddonMessage("Debugging saved attempt data...")
-    
-    local totalMounts = 0
-    local mountsWithData = 0
-    local totalAttempts = 0
-    
-    if not RaidMount.mountInstances then
-        print("No mount instances loaded")
-        return
-    end
-    
-    for _, mount in ipairs(RaidMount.mountInstances) do
-        totalMounts = totalMounts + 1
-        local trackingKey = mount.spellID
-        local attemptData = RaidMountAttempts[trackingKey]
-        
-        if attemptData and type(attemptData) == "table" then
-            local attempts = attemptData.total or 0
-            if attempts > 0 then
-                mountsWithData = mountsWithData + 1
-                totalAttempts = totalAttempts + attempts
-                print(string.format("|cFF00FF00%s|r: %d attempts", mount.mountName or "Unknown", attempts))
-            end
-        end
-    end
-    
-    print(string.format("Total mounts: %d", totalMounts))
-    print(string.format("Mounts with data: %d", mountsWithData))
-    print(string.format("Total attempts recorded: %d", totalAttempts))
-    
-    if mountsWithData == 0 then
-        print("|cFFFF0000No historical data found. Try /rm refresh to scan mount collection.|r")
-    end
-end
 
--- Show stats command
-function RaidMount.ShowStatsCommand()
-    if not RaidMount.RaidMountFrame then
-        RaidMount.CreateMainFrame()
-    end
-    
-    RaidMount.RaidMountFrame:Show()
-    RaidMount.isStatsView = true
-    
-    if RaidMount.ShowDetailedStatsView then
-        RaidMount.ShowDetailedStatsView()
-        PrintAddonMessage("Statistics view displayed.", false)
-    else
-        PrintAddonMessage("Statistics view not available.", true)
-    end
-end
 
--- Reset command with confirmation
-function RaidMount.ResetCommand()
-    if not RaidMount.resetConfirmationPending then
-        RaidMount.resetConfirmationPending = true
-        PrintAddonMessage(RaidMount.L("RESET_CONFIRMATION"), true)
-        PrintAddonMessage(RaidMount.L("RESET_CONFIRM_AGAIN"), false)
-        
-        C_Timer.After(10, function()
-            RaidMount.resetConfirmationPending = false
-        end)
-    else
-        RaidMount.resetConfirmationPending = false
-        RaidMount.ResetAttempts()
-        PrintAddonMessage(RaidMount.L("RESET_COMPLETE"), false)
-        
-        -- Refresh UI if open
-        if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() then
-            if RaidMount.isStatsView then
-                RaidMount.ShowDetailedStatsView()
-            else
-                RaidMount.PopulateUI()
-            end
-        end
-    end
-end
 
--- Refresh command
-function RaidMount.RefreshCommand()
-    print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Starting mount collection refresh...")
-    
-    if RaidMount.RefreshMountCollection then
-        RaidMount.RefreshMountCollection()
-        print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: " .. RaidMount.L("REFRESH_COMPLETE"))
-        
-        -- Refresh UI if open
-        if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() then
-            if RaidMount.isStatsView then
-                RaidMount.ShowDetailedStatsView()
-            else
-                RaidMount.PopulateUI()
-            end
-        end
-    else
-        print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Refresh function not available.")
-    end
-end
 
--- Verify command
-function RaidMount.VerifyCommand()
-    if RaidMount.VerifyStatistics then
-        print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Starting verification against Blizzard statistics...")
-        
-        local results = RaidMount.VerifyStatistics()
-        
-        if results.verified == 0 then
-            print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: No mounts with Blizzard statistics found to verify.")
-        else
-            print(string.format("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Verified %d mounts against Blizzard statistics.", results.verified))
-            
-            if results.corrected > 0 then
-                print(string.format("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Updated %d mount(s) with higher attempt counts from Blizzard data:", results.corrected))
-                for _, correction in ipairs(results.corrections) do
-                    print(string.format("  |cFF00FF00%s|r: |cFFFF0000%d|r → |cFF00FF00%d|r attempts (Stat ID: %s)", 
-                        correction.mountName, 
-                        correction.oldTotal, 
-                        correction.newTotal, 
-                        correction.statId or "Unknown"))
-                end
-            else
-                print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: All mount attempt counts match Blizzard statistics.")
-            end
-        end
-        
-        -- Refresh UI if open
-        if RaidMount.RaidMountFrame and RaidMount.RaidMountFrame:IsShown() then
-            if RaidMount.isStatsView then
-                RaidMount.ShowDetailedStatsView()
-            else
-                RaidMount.PopulateUI()
-            end
-        end
-    else
-        PrintAddonMessage(RaidMount.L("VERIFY_COMPLETE"), false)
-    end
-end
-
--- Function to show boss drop mounts in a copyable window
-function RaidMount.ShowDropMountWindow(dropMounts)
-    -- Create the window if it doesn't exist
-    if not RaidMount.DropMountFrame then
-        RaidMount.DropMountFrame = CreateFrame("Frame", "RaidMountDropFrame", UIParent, "BasicFrameTemplateWithInset")
-        RaidMount.DropMountFrame:SetSize(600, 500)
-        RaidMount.DropMountFrame:SetPoint("CENTER")
-        RaidMount.DropMountFrame:SetMovable(true)
-        RaidMount.DropMountFrame:EnableMouse(true)
-        RaidMount.DropMountFrame:RegisterForDrag("LeftButton")
-        RaidMount.DropMountFrame:SetScript("OnDragStart", function(self) self:StartMoving() end)
-        RaidMount.DropMountFrame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-        
-        -- Title
-        RaidMount.DropMountFrame.title = RaidMount.DropMountFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-        RaidMount.DropMountFrame.title:SetPoint("TOP", 0, -10)
-        RaidMount.DropMountFrame.title:SetText("Boss Drop Mounts - Spell IDs")
-        
-        -- Subtitle
-        RaidMount.DropMountFrame.subtitle = RaidMount.DropMountFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        RaidMount.DropMountFrame.subtitle:SetPoint("TOP", 0, -30)
-        RaidMount.DropMountFrame.subtitle:SetTextColor(0.8, 0.8, 0.8, 1)
-        
-        -- Create scroll frame
-        local scrollFrame = CreateFrame("ScrollFrame", nil, RaidMount.DropMountFrame, "UIPanelScrollFrameTemplate")
-        scrollFrame:SetPoint("TOPLEFT", 10, -50)
-        scrollFrame:SetPoint("BOTTOMRIGHT", -30, 40)
-        
-        -- Create edit box for copyable text
-        local editBox = CreateFrame("EditBox", nil, scrollFrame)
-        editBox:SetMultiLine(true)
-        editBox:SetAutoFocus(false)
-        editBox:SetFontObject("ChatFontNormal")
-        editBox:SetWidth(550)
-        editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-        
-        scrollFrame:SetScrollChild(editBox)
-        RaidMount.DropMountFrame.editBox = editBox
-        
-        -- Close button
-        local closeButton = CreateFrame("Button", nil, RaidMount.DropMountFrame, "UIPanelButtonTemplate")
-        closeButton:SetSize(80, 25)
-        closeButton:SetPoint("BOTTOMRIGHT", -20, 10)
-        closeButton:SetText(RaidMount.L("CLOSE"))
-        closeButton:SetScript("OnClick", function()
-            -- Clean up header frame before hiding
-            if RaidMount.HeaderFrame then
-                RaidMount.HeaderFrame:Hide()
-                RaidMount.HeaderFrame:SetParent(nil)
-                RaidMount.HeaderFrame = nil
-            end
-            RaidMount.DropMountFrame:Hide()
-        end)
-        
-        -- Select All button
-        local selectButton = CreateFrame("Button", nil, RaidMount.DropMountFrame, "UIPanelButtonTemplate")
-        selectButton:SetSize(80, 25)
-        selectButton:SetPoint("RIGHT", closeButton, "LEFT", -10, 0)
-        selectButton:SetText(RaidMount.L("SELECT_ALL"))
-        selectButton:SetScript("OnClick", function()
-            RaidMount.DropMountFrame.editBox:SetFocus()
-            RaidMount.DropMountFrame.editBox:HighlightText()
-        end)
-    end
-    
-    -- Build the text content
-    local textContent = string.format("Boss Drop Mounts from Mount Journal (%d total)\n", #dropMounts)
-    textContent = textContent .. "Format: [Status] Mount Name (MountID: X, SpellID: Y)\n"
-    textContent = textContent .. "Status: ✓ = Collected, ✗ = Not Collected\n\n"
-    
-    for _, mount in ipairs(dropMounts) do
-        local statusIcon = mount.isCollected and "✓" or "✗"
-        textContent = textContent .. string.format("%s %s (MountID: %d, SpellID: %d)\n", 
-            statusIcon, mount.name, mount.MountID, mount.spellID)
-    end
-    
-    -- Set the text and adjust height
-    RaidMount.DropMountFrame.editBox:SetText(textContent)
-    RaidMount.DropMountFrame.editBox:SetHeight(math.max(400, #dropMounts * 15 + 100))
-    
-    -- Show the window
-    RaidMount.DropMountFrame:Show()
-end
-
--- Performance monitoring system
-RaidMount.performanceStats = RaidMount.performanceStats or {
-    tooltipCache = {hits = 0, misses = 0},
-    textureCache = {hits = 0, misses = 0},
-    updateCount = 0,
-    lastUpdateTime = 0,
-    frameTime = 0
-}
-local performanceStats = RaidMount.performanceStats
-
-function RaidMount.GetPerformanceStats()
-    local stats = {
-        tooltipCache = RaidMount.GetTooltipCacheStats(),
-        textureCache = {
-            size = RaidMount.textureCache and #RaidMount.textureCache or 0,
-            hits = performanceStats.textureCache.hits,
-            misses = performanceStats.textureCache.misses
-        },
-        updates = performanceStats.updateCount,
-        frameTime = performanceStats.frameTime
-    }
-    return stats
-end
-
-function RaidMount.ResetPerformanceStats()
-    performanceStats = {
-        tooltipCache = {hits = 0, misses = 0},
-        textureCache = {hits = 0, misses = 0},
-        updateCount = 0,
-        lastUpdateTime = 0,
-        frameTime = 0
-    }
-    RaidMount.ClearTooltipCache()
-end
-
--- Utility: Show debug info in a temporary popup frame
-function RaidMount.ShowDebugPopup(text)
-    if not RaidMount.DebugPopup then
-        local f = CreateFrame("Frame", "RaidMountDebugPopup", UIParent, "BackdropTemplate")
-        f:SetSize(500, 80)
-        f:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
-        f:SetBackdrop({ bgFile = "Interface/Tooltips/UI-Tooltip-Background" })
-        f:SetBackdropColor(0, 0, 0, 0.8)
-        f.text = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-        f.text:SetPoint("CENTER", f, "CENTER")
-        f:Hide()
-        RaidMount.DebugPopup = f
-    end
-    local f = RaidMount.DebugPopup
-    f.text:SetText(text)
-    f:Show()
-    C_Timer.After(4, function() f:Hide() end)
-end

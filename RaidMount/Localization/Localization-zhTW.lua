@@ -105,6 +105,17 @@ local zhTWLocale = {
     ["ACTIVE_FILTERS"] = "活動過濾器：%s",
     ["NO_FILTERS_ACTIVE"] = "無活動過濾器 - 顯示所有坐騎",
     ["NO_MOUNTS_FOUND"] = "未找到符合您條件的坐騎。",
+    ["NEW_MOUNT_COLLECTED"] = "獲得新坐騎！坐騎ID：%d",
+    ["DIFFICULTY_SET"] = "%s設定為%s",
+    ["TOMTOM_WAYPOINT_SET"] = "TomTom路徑點已為%s設定",
+    ["COULD_NOT_FIND_MAP_ID"] = "找不到區域的地圖ID：%s",
+    ["WAYPOINT_SET"] = "為%s在%s（%.1f，%.1f）設定路徑點",
+    ["MOUNT_LOCATION"] = "%s位置：%s（%s）- %.1f，%.1f",
+    ["INSTALL_TOMTOM"] = "安裝TomTom插件以獲得更好的跨資料片路徑點支援",
+    ["TRAVEL_GUIDE"] = "RaidMount旅行指南：%s",
+    ["CROSS_EXPANSION_TRAVEL"] = "跨資料片旅行：%s -> %s（%s）",
+    ["TRAVEL_NEEDED"] = "需要旅行：%s -> %s（%s）",
+    ["INSTANCE_EXPANSION_INFO"] = "副本：%s | 資料片：%s",
     
     -- Errors
     ["ERROR_HEADERS_NOT_INIT"] = "RaidMount：警告 - HeaderTexts未初始化",

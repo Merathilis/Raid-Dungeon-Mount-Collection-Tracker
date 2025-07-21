@@ -2,7 +2,7 @@
 ## Notes: Tracks raid and dungeon mount attempts, collections, and lockouts with modernized UI and enhanced features.
 ## Interface: 110107, 110200
 ## Author: knutballs @EU Ravencrest
-## Version: 15.07.25.30
+## Version: 21.07.25.31
 ## SavedVariables: RaidMountAttempts, RaidMountSettings, RaidMountSaved
 
 ## X-Category: Boss Encounters
@@ -19,22 +19,34 @@ Localization/Localization-frFR.lua
 Localization/Localization-esES.lua
 Localization/Localization-ruRU.lua
 Localization/Localization-zhCN.lua
+Localization/Localization-zhTW.lua
 
 # Core data files
 Data/MountData.lua
 
 # Core functionality
-MountCheck.lua
-Core/LockoutCheck.lua
+#MountCheck.lua
+Core/EnhancedLockoutSystem.lua
 Core/RaidMountTooltip.lua
 Core/RaidMountMinimap.lua
+Core/RaidMountData.lua
+Core/RaidMountStatistics.lua
+Core/RaidMountSession.lua
+Core/RaidMountCommands.lua
+
 
 # UI modules (after core is loaded)
 UI/RaidMountUI_Utils.lua
 UI/RaidMountUI_Stats.lua
+UI/RaidMountUI_Search.lua
+UI/RaidMountUI_Dropdowns.lua
 UI/RaidMountUI_Filters.lua
+
+UI/RaidMountUI_ScrollFrame.lua
+UI/RaidMountUI_MountList_Core.lua
+UI/RaidMountUI_MountList_Rendering.lua
+UI/RaidMountUI_MountList_Buttons.lua
 UI/RaidMountUI_Main.lua
-UI/RaidMountUI_MountList.lua
 UI/RaidMountUI_Popup.lua
 UI/RaidMountUI_InfoPanel.lua
 UI/RaidMountUI_IconView.lua

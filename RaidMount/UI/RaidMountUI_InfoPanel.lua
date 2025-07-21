@@ -173,6 +173,7 @@ function RaidMount.CreateInfoPanel(frame)
     bountyText:SetFont(cachedFontPath, 16, "OUTLINE")
     bountyText:SetJustifyH("LEFT")
     bountyText:SetWidth(160)
+    bountyText:SetTextColor(1, 0.84, 0, 1) -- Gold color for bounty text
     infoPanel.bountyText = bountyText
 
     local collectionDate = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -212,6 +213,7 @@ end
 
 -- Helper function to ensure class data is stored when tracking attempts
 function RaidMount.StoreClassData(trackingKey, characterName)
+    -- Don't wipe RaidMountAttempts - just ensure it exists
     if not RaidMountAttempts then
         RaidMountAttempts = {}
     end
@@ -267,29 +269,8 @@ function RaidMount.ShowInfoPanel(data)
     -- Icon
     panel.icon:SetTexture(GetMountIcon(data))
     
-    -- Mount Name with rarity coloring - truncated if too long
-    local nameColor = "|cFFA335EE" -- Default purple for raid mounts
-    if data.mountID and C_MountJournal then
-        local mountName, spellID, iconFile, isActive, isUsable, sourceType = C_MountJournal.GetMountInfoByID(data.mountID)
-        if mountName and sourceType then
-            local quality = 4 -- Default to epic
-            if sourceType == 7 or sourceType == 9 then quality = 5 -- TCG/Promotional
-            elseif sourceType == 2 or sourceType == 3 or sourceType == 6 then quality = 3 end -- Quest/Vendor/Profession
-            
-            if quality == 3 then
-                nameColor = data.collected and "|cFF0070DD" or "|cFF0055AA" -- Blue
-            elseif quality == 4 then
-                nameColor = data.collected and "|cFFA335EE" or "|cFF7F26BB" -- Purple
-            elseif quality == 5 then
-                nameColor = data.collected and "|cFFFF8000" or "|cFFBF6000" -- Orange
-            end
-            
-            -- Override color for Collector's Bounty mounts
-            if data.collectorsBounty then
-                nameColor = data.collected and "|cFFFFE0A0" or "|cFFD4AF37" -- Golden colors for Collector's Bounty mounts
-            end
-        end
-    end
+    -- Use unified mount coloring system with quality-based colors
+    local nameColor = RaidMount.GetMountNameColor(data)
     
     -- Truncate mount name if too long to prevent overflow
     local mountName = data.mountName or "Unknown Mount"
@@ -334,8 +315,12 @@ function RaidMount.ShowInfoPanel(data)
     local trackingKey = data.spellID or data.mountID
     local attemptData = RaidMountAttempts and RaidMountAttempts[trackingKey]
     
+
+    
     if attemptData and type(attemptData) == "table" and attemptData.characters then
         local characterAttempts = {}
+        local seenCharacters = {} -- Track normalized character names to prevent duplicates
+        
         for charName, charData in pairs(attemptData.characters) do
             local count = 0
             if type(charData) == "number" then
@@ -346,66 +331,213 @@ function RaidMount.ShowInfoPanel(data)
                 count = charData.count
             end
             
+            -- Only show characters who have actually attempted this mount
             if count > 0 then
-                local shortName = charName:match("([^%-]+)") or charName
-                if #shortName > 12 then shortName = shortName:sub(1, 12) end
+                -- Normalize character name to prevent duplicates
+                local charNameOnly = charName:match("([^%-]+)") or charName
+                local realmName = charName:match("^[^%-]+%-([^%-]+)$") or "Unknown"
+                local normalizedName = RaidMount.NormalizeCharacterID and RaidMount.NormalizeCharacterID(charNameOnly, realmName) or charNameOnly
                 
-                local lastAttemptDate = "Never"
-                if attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] then
-                    lastAttemptDate = attemptData.lastAttemptDates[charName]
+                -- Skip if we've already seen this character
+                if seenCharacters[normalizedName] then
+                    -- Merge attempts if duplicate found
+                    for _, existing in ipairs(characterAttempts) do
+                        if existing.normalizedName == normalizedName then
+                            existing.count = existing.count + count
+                            -- Use the most recent date
+                            local currentDate = attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] or "Never"
+                            if currentDate ~= "Never" and (existing.lastAttempt == "Never" or currentDate > existing.lastAttempt) then
+                                existing.lastAttempt = currentDate
+                            end
+                            break
+                        end
+                    end
+                else
+                    seenCharacters[normalizedName] = true
+                    
+                    local shortName = charNameOnly
+                    if #shortName > 12 then shortName = shortName:sub(1, 12) end
+                    
+                    local lastAttemptDate = "Never"
+                    if attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] then
+                        lastAttemptDate = attemptData.lastAttemptDates[charName]
+                    end
+                    
+                    -- Get class and color the name
+                    local class = nil
+                    if attemptData.classes and attemptData.classes[charName] then
+                        class = attemptData.classes[charName]
+                    end
+                    
+                    local color = GetClassColor(class)
+                    local coloredName = "|cFF" .. color .. shortName .. "|r"
+                    
+                    table.insert(characterAttempts, {
+                        name = coloredName,
+                        count = count,
+                        lastAttempt = lastAttemptDate,
+                        normalizedName = normalizedName
+                    })
+                end
+            end
+        end
+        
+
+        
+        -- Clean up any incorrect date entries for characters who haven't attempted
+        if attemptData.lastAttemptDates then
+            for charName, attemptDate in pairs(attemptData.lastAttemptDates) do
+                local charData = attemptData.characters[charName]
+                local count = 0
+                if type(charData) == "number" then
+                    count = charData
+                elseif type(charData) == "table" and charData.count then
+                    count = charData.count
                 end
                 
-                -- Get class and color the name - FIXED
-                local class = nil
-                if attemptData.classes and attemptData.classes[charName] then
-                    class = attemptData.classes[charName]
+                -- Remove date entry if character has no attempts
+                if count == 0 then
+                    attemptData.lastAttemptDates[charName] = nil
                 end
-                
-                local color = GetClassColor(class)
-                local coloredName = "|cFF" .. color .. shortName .. "|r"
-                
-                table.insert(characterAttempts, {
-                    name = coloredName,
-                    count = count,
-                    lastAttempt = lastAttemptDate
-                })
             end
         end
         
         if #characterAttempts > 0 then
             table.sort(characterAttempts, function(a, b) return a.count > b.count end)
             
-            -- Display up to 4 characters now
-            if characterAttempts[1] then
-                panel.charAttempts1:SetText(characterAttempts[1].name .. ": " .. characterAttempts[1].count .. " attempts (" .. characterAttempts[1].lastAttempt .. ")")
-            end
-            if characterAttempts[2] then
-                panel.charAttempts2:SetText(characterAttempts[2].name .. ": " .. characterAttempts[2].count .. " attempts (" .. characterAttempts[2].lastAttempt .. ")")
-            end
-            if characterAttempts[3] then
-                panel.charAttempts3:SetText(characterAttempts[3].name .. ": " .. characterAttempts[3].count .. " attempts (" .. characterAttempts[3].lastAttempt .. ")")
-            end
-            if characterAttempts[4] then
-                panel.charAttempts4:SetText(characterAttempts[4].name .. ": " .. characterAttempts[4].count .. " attempts (" .. characterAttempts[4].lastAttempt .. ")")
-            elseif #characterAttempts > 4 then
-                panel.charAttempts4:SetText("|cFF999999+" .. (#characterAttempts - 3) .. RaidMount.L("MORE_CHARACTERS") .. "|r")
-            end
+            -- Debug: Print what we're about to display
+    
+            
+            
+                    -- Display up to 4 characters now
+        if characterAttempts[1] then
+            local text1 = characterAttempts[1].name .. ": " .. characterAttempts[1].count .. " attempts (" .. characterAttempts[1].lastAttempt .. ")"
+            panel.charAttempts1:SetText(text1)
+        end
+        if characterAttempts[2] then
+            local text2 = characterAttempts[2].name .. ": " .. characterAttempts[2].count .. " attempts (" .. characterAttempts[2].lastAttempt .. ")"
+            panel.charAttempts2:SetText(text2)
+        end
+        if characterAttempts[3] then
+            local text3 = characterAttempts[3].name .. ": " .. characterAttempts[3].count .. " attempts (" .. characterAttempts[3].lastAttempt .. ")"
+            panel.charAttempts3:SetText(text3)
+        end
+        if characterAttempts[4] then
+            local text4 = characterAttempts[4].name .. ": " .. characterAttempts[4].count .. " attempts (" .. characterAttempts[4].lastAttempt .. ")"
+            panel.charAttempts4:SetText(text4)
+        elseif #characterAttempts > 4 then
+            local textMore = "|cFF999999+" .. (#characterAttempts - 3) .. RaidMount.L("MORE_CHARACTERS") .. "|r"
+            panel.charAttempts4:SetText(textMore)
+        end
         end
     end
     
     -- Column 3: Status & Lockout - now with lockout timer
     local isLockedOut = false
     local lockoutTimerText = "Available now"
-    local lockoutColor = "|cFF00FF00" -- Green for available
-
-    -- First, check if we have actual lockout data from the game API
-    if data.lockoutStatus and data.lockoutStatus ~= "Unknown" and data.lockoutStatus ~= "No lockout" then
-        -- If there's a lockout, use the same time as the lockout status
-        lockoutTimerText = data.lockoutStatus
-        lockoutColor = "|cFFFF6666" -- Red for locked out
-        isLockedOut = true
+    
+    -- Add Collector's Bounty information
+    if data.collectorsBounty then
+        panel.bountyText:SetText("|cFFFFD700[Collector's Bounty]|r")
+        panel.bountyText:Show()
     else
-        -- Fallback to addon tracking if no game API lockout data
+        panel.bountyText:Hide()
+    end
+
+    -- Get current lockout information using the new function
+    if data.raidName then
+        if data.DifficultyIDs and #data.DifficultyIDs > 0 then
+            -- For mounts with multiple difficulties, check all relevant lockouts
+            local allLockoutInfo = {}
+            local anyLockedOut = false
+            
+            -- Check if this mount has shared difficulties
+            local hasSharedDifficulties = data.SharedDifficulties and next(data.SharedDifficulties) ~= nil
+            
+            for _, diffID in ipairs(data.DifficultyIDs) do
+                local difficultyName = nil
+                if diffID == 17 then difficultyName = "LFR"
+                elseif diffID == 14 then difficultyName = "Normal"
+                elseif diffID == 15 then difficultyName = "Heroic"
+                elseif diffID == 16 then difficultyName = "Mythic"
+                elseif diffID == 3 then 
+                    difficultyName = hasSharedDifficulties and "10/25" or "10 Player"
+                elseif diffID == 4 then 
+                    difficultyName = hasSharedDifficulties and "10/25" or "25 Player"
+                elseif diffID == 5 then 
+                    difficultyName = hasSharedDifficulties and "10/25H" or "10 Player (Heroic)"
+                elseif diffID == 6 then 
+                    difficultyName = hasSharedDifficulties and "10/25H" or "25 Player (Heroic)"
+                end
+                
+                if difficultyName then
+                    local lockoutTime, canEnter = RaidMount.GetDifficultyLockoutStatus(data.raidName, diffID)
+                    table.insert(allLockoutInfo, {
+                        difficulty = difficultyName,
+                        canEnter = canEnter,
+                        lockoutTime = lockoutTime
+                    })
+                    
+                    if not canEnter then
+                        anyLockedOut = true
+                    end
+                end
+            end
+            
+            -- Display lockout information for all difficulties
+            if #allLockoutInfo > 0 then
+                local lockoutText = ""
+                local seenDifficulties = {} -- Track difficulties to avoid duplicates for shared lockouts
+                local lineCount = 0
+                
+                for i, lockoutInfo in ipairs(allLockoutInfo) do
+                    -- Skip duplicate entries for shared difficulties
+                    if hasSharedDifficulties and (lockoutInfo.difficulty == "10/25" or lockoutInfo.difficulty == "10/25H") then
+                        if seenDifficulties[lockoutInfo.difficulty] then
+                            -- Skip this entry
+                        else
+                            seenDifficulties[lockoutInfo.difficulty] = true
+                            
+                            local statusColor = lockoutInfo.canEnter and "|cFF00FF00" or "|cFFFF0000"
+                            local statusText = lockoutInfo.canEnter and "Available" or "Locked"
+                            local timeText = lockoutInfo.lockoutTime ~= "No lockout" and " (" .. lockoutInfo.lockoutTime .. ")" or ""
+                            
+                            if lineCount > 0 then lockoutText = lockoutText .. "\n" end
+                            lockoutText = lockoutText .. "  " .. lockoutInfo.difficulty .. ": " .. statusColor .. statusText .. timeText .. "|r"
+                            lineCount = lineCount + 1
+                        end
+                    else
+                        local statusColor = lockoutInfo.canEnter and "|cFF00FF00" or "|cFFFF0000"
+                        local statusText = lockoutInfo.canEnter and "Available" or "Locked"
+                        local timeText = lockoutInfo.lockoutTime ~= "No lockout" and " (" .. lockoutInfo.lockoutTime .. ")" or ""
+                        
+                        if lineCount > 0 then lockoutText = lockoutText .. "\n" end
+                        lockoutText = lockoutText .. "  " .. lockoutInfo.difficulty .. ": " .. statusColor .. statusText .. timeText .. "|r"
+                        lineCount = lineCount + 1
+                    end
+                end
+                
+                -- Just show the individual difficulty statuses, no redundant summary
+                panel.lockoutStatus:SetText("")
+                panel.lockoutTimer:SetText(lockoutText)
+            else
+                -- Fallback if no lockout info
+                panel.lockoutStatus:SetText("")
+                panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": |cFF00FF00" .. RaidMount.L("AVAILABLE_NOW") .. "|r")
+            end
+        else
+            -- Single difficulty mount - use the basic lockout check
+            local currentLockout = RaidMount.GetRaidLockout(data.raidName)
+            if currentLockout and currentLockout ~= "No lockout" then
+                panel.lockoutStatus:SetText("")
+                panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": |cFFFF6666" .. currentLockout .. "|r")
+            else
+                panel.lockoutStatus:SetText("")
+                panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": |cFF00FF00" .. RaidMount.L("AVAILABLE_NOW") .. "|r")
+            end
+        end
+    else
+        -- No raid name - fallback to addon tracking
         local trackingKey = data.spellID or data.mountID
         local attemptData = RaidMountAttempts and RaidMountAttempts[trackingKey]
         local currentCharacter = UnitName("player") .. "-" .. GetRealmName()
@@ -438,21 +570,21 @@ function RaidMount.ShowInfoPanel(data)
                             else
                                 lockoutTimerText = string.format("%dm", minutes)
                             end
-                            lockoutColor = "|cFFFF6666" -- Red for locked out
+                            local lockoutColor = "|cFFFF6666" -- Red for locked out
                             isLockedOut = true
                         end
                     end
                 end
             end
         end
-    end
-
-    if isLockedOut then
-        panel.lockoutStatus:SetText(RaidMount.L("LOCKOUT") .. ": |cFFFF6666" .. RaidMount.L("LOCKED_OUT") .. "|r")
-        panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": " .. lockoutColor .. lockoutTimerText .. "|r")
-    else
-        panel.lockoutStatus:SetText(RaidMount.L("LOCKOUT") .. ": |cFF00FF00" .. RaidMount.L("NO_LOCKOUT") .. "|r")
-        panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": |cFF00FF00" .. RaidMount.L("AVAILABLE_NOW") .. "|r")
+        
+        if isLockedOut then
+            panel.lockoutStatus:SetText("")
+            panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": " .. lockoutColor .. lockoutTimerText .. "|r")
+        else
+            panel.lockoutStatus:SetText("")
+            panel.lockoutTimer:SetText(RaidMount.L("NEXT_ATTEMPT") .. ": |cFF00FF00" .. RaidMount.L("AVAILABLE_NOW") .. "|r")
+        end
     end
     
     -- Add Collector's Bounty information in the Status section

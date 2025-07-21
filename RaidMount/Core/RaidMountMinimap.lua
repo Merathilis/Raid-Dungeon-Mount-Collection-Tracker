@@ -1,6 +1,18 @@
 -- Minimap Button for RaidMount
 local addonName, RaidMount = ...
+
 RaidMount = RaidMount or {}
+
+-- Performance optimization: Use local variables for frequently accessed functions
+local UnitName = UnitName
+local GetRealmName = GetRealmName
+local CreateFrame = CreateFrame
+local C_Timer = C_Timer
+local math_cos = math.cos
+local math_sin = math.sin
+local math_rad = math.rad
+local math_deg = math.deg
+local math_atan2 = math.atan2
 
 local buttonName = "RaidMountMinimapButton"
 local minimapButton
@@ -17,21 +29,27 @@ local function UpdateButtonPosition()
     local minimapWidth = Minimap:GetWidth() / 2
     local minimapHeight = Minimap:GetHeight() / 2
     local radius = math.min(minimapWidth, minimapHeight) - 5 -- 5px padding from edge
-    local x = math.cos(math.rad(angle)) * radius
-    local y = math.sin(math.rad(angle)) * radius
+    local x = math_cos(math_rad(angle)) * radius
+    local y = math_sin(math_rad(angle)) * radius
     minimapButton:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
 
 local function OnDragStart(self)
-    self:SetScript("OnUpdate", function(self)
+    -- Use event-driven updates instead of continuous OnUpdate
+    local function UpdatePosition()
         local mx, my = Minimap:GetCenter()
         local px, py = GetCursorPosition()
         local scale = Minimap:GetEffectiveScale()
         px, py = px / scale, py / scale
         local dx, dy = px - mx, py - my
-        dragAngle = math.deg(math.atan2(dy, dx)) % 360
+        dragAngle = math_deg(math_atan2(dy, dx)) % 360
         RaidMountSettings.minimap.angle = dragAngle
         UpdateButtonPosition()
+    end
+    
+    -- Use throttled updates instead of continuous OnUpdate
+    self:SetScript("OnUpdate", function(self)
+        UpdatePosition()
     end)
 end
 
@@ -100,4 +118,24 @@ f:SetScript("OnEvent", function(self, event, arg1)
     if arg1 == addonName then
         RaidMount.CreateMinimapButton()
     end
-end) 
+end)
+
+-- Cleanup function for minimap button
+function RaidMount.CleanupMinimapButton()
+    if minimapButton then
+        minimapButton:SetScript("OnDragStart", nil)
+        minimapButton:SetScript("OnDragStop", nil)
+        minimapButton:SetScript("OnClick", nil)
+        minimapButton:SetScript("OnEnter", nil)
+        minimapButton:SetScript("OnLeave", nil)
+        minimapButton:SetScript("OnUpdate", nil)
+        minimapButton:Hide()
+        minimapButton = nil
+    end
+    
+    if f then
+        f:UnregisterAllEvents()
+        f:SetScript("OnEvent", nil)
+        f = nil
+    end
+end 
