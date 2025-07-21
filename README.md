@@ -1,169 +1,110 @@
-# RaidMount - Raid & Dungeon Mount Collection Tracker
+# RaidMount - Comprehensive WoW Mount Tracking Addon
 
-##  Overview
+**RaidMount** is a powerful World of Warcraft addon that helps you track and manage your rare mount collection across all characters. From Classic to The War Within, RaidMount automatically logs mount attempts, displays real-time stats, and provides a clean, high-performance UI.
 
-**RaidMount** is a comprehensive World of Warcraft addon that tracks your attempts at obtaining rare mounts from raids, dungeons, world bosses, and special events. Built with performance and accuracy in mind, it provides detailed statistics, real-time tracking, and a professional user interface to help you manage your mount collection journey.
+## Features
 
-**Current Version:** 12.07.25.21  
-**Interface Support:** 110107  
-**Author:** knutballs @EU Ravencrest
+### Core Functionality
+- **Automatic Attempt Tracking** – Logs attempts when you kill bosses with mount drops
+- **Cross-Character Sync** – Tracks attempts across all your characters with realm and class data
+- **Real-Time Collection Detection** – Automatically updates when you collect a mount
+- **Blizzard Statistics Verification** – Syncs with official stats for accuracy
+- **Session Management** – Tracks current session attempts with timeout handling
 
----
+### User Interface
+- **Professional Dark Theme** – Clean, performance-optimized design
+- **8-Column Table View** – Mount name, raid, boss, drop rate, expansion, attempts, collection status, instance info
+- **Advanced Filtering & Sorting** – Multi-select filters by expansion, type, difficulty, and collection status
+- **Instant Search** – Live search with 0.02s debouncing for performance
+- **Grid-Based Icon View** – Visual icon-based display with waypoint integration
+- **Progress Bars** – Visual indicators of collection progress
 
-##  Features
+### Interactive Features
+- **Clickable Difficulty Buttons** – Shows lockout status and allows instant difficulty changes
+- **Visual Status Indicators** – Button colors indicate lockouts (green = available, red = locked)
+- **Smart Lockout Handling** – Combines 10/25 modes and supports all difficulty types
 
-###  Core Functionality
-- **90+ Mounts Tracked** - Complete database from Classic WoW through The War Within
-- **Automatic Attempt Tracking** - Records attempts when you kill bosses
-- **Cross-Character Sync** - Tracks attempts across all your characters
-- **Real-time Collection Detection** - Automatically updates when you obtain mounts
-- **Statistics Verification** - Cross-checks with Blizzard's achievement statistics
+### Character Tracker
+- **Per-Character Tracking** – Tracks individual attempts and last-seen dates
+- **Class Color Coding** – Displays character names in their class colors
+- **Data Verification** – Uses Blizzard achievement stats for backup and syncing
+- **Realm Support** – Handles cross-realm characters properly
 
-###  User Interface
-- **Professional Dark Theme** - Matches WoW's aesthetic
-- **8-Column Display** - Mount, Raid, Boss, Drop Rate, Expansion, Attempts, Collected, Raid Available
-- **Advanced Filtering** - Filter by status, expansion, content type, and live search
-- **Sortable Columns** - Click any header to sort data
-- **Enhanced Tooltips** - Detailed mount information with character breakdowns
-- **Progress Tracking** - Visual progress bars and collection percentages
+### Statistics & Analytics
+- **Total Mounts Collected / Missing**
+- **Attempts Overview** – Sortable by attempts, drop rate, or source
+- **Expansion & Content Type Analysis** – Breakdowns by raid, dungeon, world boss, and event
+- **Most Attempted Mounts** – Highlights unlucky streaks
+- **Per-Character Attempt Rankings**
 
-###  Statistics & Analytics
-- **Overall Statistics** - Total mounts, collected count, missing count, total attempts
-- **Expansion Breakdown** - Collection rates by expansion
-- **Content Type Analysis** - Raid, dungeon, world boss, holiday event statistics
-- **Most Attempted Mounts** - Identify your "unlucky" mounts
-- **Character Breakdown** - See which characters have the most attempts
+### Waypoint & Map Integration
+- **TomTom Support** – Set waypoints directly from the interface
+- **Built-in Map Integration** – Uses WoW's native waypoints if TomTom isn't installed
 
-###  Performance Features
-- **Smart Caching** - 50-tooltip cache system for instant display
-- **Virtual Scrolling** - Only renders visible rows for smooth performance
-- **Memory Optimization** - Object pooling and efficient data structures
-- **Throttled Updates** - 300ms search throttling for smooth typing
+### Notifications
+- **Zone-Based Popups** – Alerts for mounts available in current zone
+- **Sound Alerts** – Optional drop sounds for new mounts
+- **Draggable Windows** – UI elements can be repositioned freely
 
-##  Usage
+## Slash Commands
 
-### Basic Commands
-- `/rm` - Open/close the main interface
+| Command             | Description                                 |
+|---------------------|---------------------------------------------|
+| `/rm`               | Open/close the main interface               |
+| `/rm stats`         | Open the statistics view                    |
+| `/rm characters`    | Show alt attempt tracking panel             |
+| `/rm refresh`       | Refresh your mount collection status        |
+| `/rm verify`        | Verify attempts with Blizzard statistics    |
+| `/rm refreshchars`  | Refresh alt data from Blizzard stats        |
+| `/rm sound`         | Toggle sound notifications                  |
+| `/rm reset`         | Reset all stored attempt data (confirmation required) |
 
-### Interface Navigation
+## Saved Variables
 
-#### Main Window
-- **Title Bar** - Drag to move the window
-- **Close Button** - Top-right corner to close
-- **Progress Bar** - Shows overall collection progress
-- **View Toggle** - Switch between Mount List and Statistics views
+- `RaidMountAttempts` – Attempt data and character stats
+- `RaidMountSettings` – User preferences and filter settings
+- `RaidMountSaved` – Tooltip data and enhanced settings
 
-#### Filtering System
-- **Status Filter** - All, Collected, Uncollected
-- **Expansion Filter** - All expansions from Classic to The War Within
-- **Content Type Filter** - All, Raid, Dungeon, World, Holiday, Special
-- **Search Box** - Real-time search with 300ms throttling
+## Localization
 
-#### Mount List
-- **Sortable Columns** - Click any header to sort
-- **Color Coding**:
-  - 🟢 Green: Collected mounts
-  - ⚪ White: Uncollected mounts
-  - 🟢 Green: Available raids
-  - 🔴 Red: Locked raids with countdown
-- **Hover Tooltips** - Detailed mount information
+Supports the following languages:
+- English (enUS)
+- German (deDE)
+- French (frFR)
+- Spanish (esES/esMX)
+- Russian (ruRU)
+- Simplified Chinese (zhCN)
+- Traditional Chinese (zhTW)
 
+## Installation
 
-#### Statistics View
-- **Overall Progress** - Visual progress bar with percentages
-- **Expansion Breakdown** - Collection rates by expansion
-- **Content Type Analysis** - Statistics by mount source
-- **Most Attempted** - Ranked list of your most attempted mounts
+1. Download the latest version from [CurseForge]([https://www.curseforge.com/wow/addons)](https://www.curseforge.com/wow/addons/raid-and-dungeon-mount-collection-tracker)
+2. Extract to your `World of Warcraft/_retail_/Interface/AddOns/` directory
+3. Restart WoW or reload the UI with `/reload`
 
----
+## Developer Info
 
-##  Mount Database
+- Author: **knutballs** @ EU-Ravencrest
+- Current Version: **21.07.25.35**
+- Supported Interface: **110107, 110200**
+- No external dependencies – pure Lua
 
-### Content Types Covered
-- **Raid Mounts** - All raid bosses from Classic through The War Within
-- **Dungeon Mounts** - Heroic and Mythic dungeon drops
-- **World Boss Mounts** - Rare world spawn mounts
-- **Holiday Event Mounts** - Seasonal event rewards
-- **Special Mounts** - Achievement and time-limited mounts
+## Contributing
 
-### Notable Mounts Included
-- **Classic**: Onyxian Drake, Rivendare's Deathcharger
-- **TBC**: Ashes of Al'ar, Fiery Warhorse, Raven Lord
-- **WotLK**: Invincible, Mimiron's Head, Blue Proto-Drake
-- **Cataclysm**: Pureblood Fire Hawk, Drake of the South Wind
-- **MoP**: Astral Cloud Serpent, Kor'kron Juggernaut
-- **WoD**: Ironhoof Destroyer, Felsteel Annihilator
-- **Legion**: Felblaze Infernal, Antoran Charhound
-- **BfA**: G.M.O.D., Glacial Tidestorm, Surf Jelly
-- **Shadowlands**: Sanctum Gloomcharger, Vengeance
-- **Dragonflight**: Anu'relos, Flame's Guidance
-- **The War Within**: Sureki Skyrazor, Prototype A.S.M.R.
-
----
-
-##  Settings & Customization
-
-### Saved Variables
-The addon automatically saves your data in three variables:
-- `RaidMountAttempts` - Attempt tracking data
-- `RaidMountSettings` - User preferences
-- `RaidMountSaved` - Enhanced tooltip settings
-
-### Data Management
-- **Automatic Backup** - Data is verified against Blizzard statistics
-- **Cross-Character Sync** - Attempts tracked across all characters
-- **UK Date Format** - Timestamps in dd/mm/yy format
-- **Class Information** - Character class data stored for tooltips
-
----
-
-##  Technical Details
-
-### Performance Optimizations
-- **Tooltip Caching** - 50-tooltip cache with hit/miss tracking
-- **Mount Detection** - Multiple fallback methods for accuracy
-- **Statistics Verification** - Cross-checks with Blizzard API
-- **Memory Management** - Object pooling and smart cleanup
-- **Throttled Updates** - Prevents UI lag during rapid changes
-
-### Data Integrity
-- **Statistics Backup** - Uses Blizzard's achievement statistics as backup
-- **Self-Correcting** - Automatically updates if statistics show higher counts
-- **Character Tracking** - Per-character attempt data with class information
-- **Collection Verification** - Multiple methods to verify mount ownership
-
-### Architecture
-- **Modular Design** - Separate files for different functionality
-- **Clean Code Structure** - Professional development practices
-- **Error Handling** - Extensive error handling and graceful degradation
-- **No External Dependencies** - Pure Lua implementation
-
----
-
-
-
-
----
-
-##  Contributing
-
-### Reporting Issues
-When reporting issues, please include:
-- The RaidMount version you're using
+Feel free to open issues or submit pull requests. When reporting bugs, please include:
+- WoW version
+- Interface version
 - Steps to reproduce the issue
-- Any error messages
+- Any error messages (Lua errors)
 
-### Feature Requests
-We welcome feature requests! Please:
-- Check existing issues first
-- Provide detailed descriptions
-- Explain the benefit to users
-
-
+Pull requests should:
+- Follow existing code style
+- Include appropriate error handling
+- Be tested in-game before submission
 
 ---
-### ⚔️ Support the Quest!
----
+
+
 
 🍵 **Support the Developer**
 
@@ -180,5 +121,5 @@ Your support helps keep the code flowing and the bugs away. 🧙‍♂️✨
 
 ---
 
-*Last updated: July 06 2025*  
+*Last updated: July 21 2025*  
 *Compatible with WoW 11.0+*
