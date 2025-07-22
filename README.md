@@ -113,7 +113,6 @@ If you enjoy this addon, consider supporting it:
 - [Buy me a coffee](https://buymeacoffee.com/j0s0r)
 - [Donate via PayPal](https://www.paypal.com/paypalme/johnfdavison)
 
-Your support helps keep the code flowing and the bugs away. 🧙‍♂️✨
 
 ---
 
