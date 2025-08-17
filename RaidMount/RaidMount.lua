@@ -1,7 +1,7 @@
 local addonName, RaidMount = ...
 RaidMount = RaidMount or {}
 
-local ADDON_VERSION = "21.07.25.35"
+local ADDON_VERSION = "29.07.25.45"
 local RAIDMOUNT_PREFIX = "|cFF33CCFFRaid|r|cFFFF0000Mount|r"
 
 -- Performance optimization: Use local variables for frequently accessed functions
@@ -283,6 +283,11 @@ function RaidMount.GetFormattedMountData()
         end
 
         local lockoutInfo = RaidMount.GetRaidLockout(mount.raidName)
+        -- For legacy raids, we need to pass expansion information for proper lockout handling
+        if mount.expansion and RaidMount.EnhancedLockout and RaidMount.EnhancedLockout:IsLegacyRaid(mount.expansion) then
+            local status, available, lockoutData = RaidMount.EnhancedLockout:GetLockoutStatus(mount.raidName, nil, mount.expansion)
+            lockoutInfo = status
+        end
         table.insert(formattedData, {
             raidName = mount.raidName or RaidMount.L("UNKNOWN"),
             bossName = mount.bossName or RaidMount.L("UNKNOWN"),
@@ -304,7 +309,7 @@ function RaidMount.GetFormattedMountData()
             DifficultyIDs = mount.DifficultyIDs,
             SharedDifficulties = mount.SharedDifficulties,
             contentType = mount.contentType,
-            collectorsBounty = mount.collectorsBounty,
+
             -- Add MapID and InstanceID for lockout matching
             MapID = mount.MapID,
             mapID = mount.MapID, -- Also add lowercase version for compatibility

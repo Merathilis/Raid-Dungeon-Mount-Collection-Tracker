@@ -38,6 +38,41 @@ local GREENFONT = GREEN_FONT_COLOR_CODE
 local WHITEFONT = HIGHLIGHT_FONT_COLOR_CODE
 local GRAYFONT = GRAY_FONT_COLOR_CODE
 
+-- Legacy raid detection - raids up through Mists of Pandaria have shared lockouts
+local LEGACY_EXPANSIONS = {
+    ["Classic"] = true,
+    ["The Burning Crusade"] = true,
+    ["Wrath of the Lich King"] = true,
+    ["Cataclysm"] = true,
+    ["Mists of Pandaria"] = true
+}
+
+-- Function to determine if a raid is legacy (has shared lockouts)
+function EnhancedLockout:IsLegacyRaid(expansion)
+    return LEGACY_EXPANSIONS[expansion] == true
+end
+
+-- Function to get legacy lockout status for an instance
+function EnhancedLockout:GetLegacyLockoutStatus(instanceName, charKey)
+    if not RaidMountSaved or not RaidMountSaved.enhancedLockouts then
+        return nil
+    end
+    
+    local charData = RaidMountSaved.enhancedLockouts.characters[charKey]
+    if not charData or not charData.lockouts then
+        return nil
+    end
+    
+    -- Check if any difficulty of this instance is locked out
+    for _, lockout in pairs(charData.lockouts) do
+        if lockout.normalizedName == self:NormalizeInstanceName(instanceName) then
+            return lockout
+        end
+    end
+    
+    return nil
+end
+
 -- Instance name translation table for localization issues
 local instanceTranslation = {
     -- Add translations as needed for different locales
@@ -386,7 +421,7 @@ function EnhancedLockout:CleanupExpiredLockouts()
 end
 
 -- Get lockout status for a specific instance and difficulty
-function EnhancedLockout:GetLockoutStatus(instanceName, difficulty)
+function EnhancedLockout:GetLockoutStatus(instanceName, difficulty, expansion)
     if not instanceName then
         return "No lockout", true, nil
     end
@@ -399,44 +434,44 @@ function EnhancedLockout:GetLockoutStatus(instanceName, difficulty)
     local normalizedName = self:NormalizeInstanceName(instanceName)
     local charKey = self:GetCharacterKey()
     
+    -- Check if this is a legacy raid (shared lockouts)
+    local isLegacy = self:IsLegacyRaid(expansion)
+    
     -- Check current character's lockouts
     local charData = RaidMountSaved.enhancedLockouts.characters[charKey]
     if charData and charData.lockouts then
-        -- First check for the specific difficulty
-        local lockoutKey = string_format("%s_%d", normalizedName, difficulty or 0)
-        local lockoutData = charData.lockouts[lockoutKey]
-        
-        if lockoutData then
-            local timeRemaining = lockoutData.resetTime - time()
-            if timeRemaining > 0 then
-                return self:FormatTimeRemaining(timeRemaining), false, lockoutData
-            end
-        end
-        
-        -- If no specific difficulty found, check for shared lockouts
-        if difficulty then
-            -- Get mount data to check for shared difficulties
-            local mountData = self:GetMountDataByInstance(instanceName)
-            if mountData and mountData.SharedDifficulties then
-                -- Check if this difficulty shares with another difficulty
-                local sharedWith = mountData.SharedDifficulties[difficulty]
-                if sharedWith then
-                    -- Check if the shared difficulty has a lockout
-                    local sharedLockoutKey = string_format("%s_%d", normalizedName, sharedWith)
-                    local sharedLockoutData = charData.lockouts[sharedLockoutKey]
-                    
-                    if sharedLockoutData then
-                        local timeRemaining = sharedLockoutData.resetTime - time()
-                        if timeRemaining > 0 then
-                            return self:FormatTimeRemaining(timeRemaining), false, sharedLockoutData
-                        end
+        -- For legacy raids, check if ANY difficulty is locked out
+        if isLegacy then
+            for lockoutKey, lockoutData in pairs(charData.lockouts) do
+                if lockoutData.normalizedName == normalizedName then
+                    local timeRemaining = lockoutData.resetTime - time()
+                    if timeRemaining > 0 then
+                        return self:FormatTimeRemaining(timeRemaining), false, lockoutData
                     end
                 end
-                
-                -- Check if any difficulty shares with this difficulty
-                for sharedDiff, primaryDiff in pairs(mountData.SharedDifficulties) do
-                    if primaryDiff == difficulty then
-                        local sharedLockoutKey = string_format("%s_%d", normalizedName, sharedDiff)
+            end
+        else
+            -- For modern raids, check specific difficulty first
+            local lockoutKey = string_format("%s_%d", normalizedName, difficulty or 0)
+            local lockoutData = charData.lockouts[lockoutKey]
+            
+            if lockoutData then
+                local timeRemaining = lockoutData.resetTime - time()
+                if timeRemaining > 0 then
+                    return self:FormatTimeRemaining(timeRemaining), false, lockoutData
+                end
+            end
+            
+            -- Check for shared difficulties (modern system)
+            if difficulty then
+                -- Get mount data to check for shared difficulties
+                local mountData = self:GetMountDataByInstance(instanceName)
+                if mountData and mountData.SharedDifficulties then
+                    -- Check if this difficulty shares with another difficulty
+                    local sharedWith = mountData.SharedDifficulties[difficulty]
+                    if sharedWith then
+                        -- Check if the shared difficulty has a lockout
+                        local sharedLockoutKey = string_format("%s_%d", normalizedName, sharedWith)
                         local sharedLockoutData = charData.lockouts[sharedLockoutKey]
                         
                         if sharedLockoutData then
@@ -446,18 +481,21 @@ function EnhancedLockout:GetLockoutStatus(instanceName, difficulty)
                             end
                         end
                     end
-                end
-            end
-        end
-    end
-    
-    -- If no specific difficulty, check any difficulty
-    if not difficulty and charData and charData.lockouts then
-        for lockoutKey, lockoutData in pairs(charData.lockouts) do
-            if lockoutData.normalizedName == normalizedName then
-                local timeRemaining = lockoutData.resetTime - time()
-                if timeRemaining > 0 then
-                    return self:FormatTimeRemaining(timeRemaining), false, lockoutData
+                    
+                    -- Check if any difficulty shares with this difficulty
+                    for sharedDiff, primaryDiff in pairs(mountData.SharedDifficulties) do
+                        if primaryDiff == difficulty then
+                            local sharedLockoutKey = string_format("%s_%d", normalizedName, sharedDiff)
+                            local sharedLockoutData = charData.lockouts[sharedLockoutKey]
+                            
+                            if sharedLockoutData then
+                                local timeRemaining = sharedLockoutData.resetTime - time()
+                                if timeRemaining > 0 then
+                                    return self:FormatTimeRemaining(timeRemaining), false, sharedLockoutData
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
@@ -477,7 +515,7 @@ function EnhancedLockout:GetLockoutColor(instanceName, difficulty, isRaid)
         self:Initialize()
     end
     
-    local status, available, lockoutData = self:GetLockoutStatus(instanceName, difficulty)
+    local status, available, lockoutData = self:GetLockoutStatus(instanceName, difficulty, nil)
     
     if not available and lockoutData then
         local color = lockoutColors.locked
@@ -569,7 +607,7 @@ end
 
 -- Check if player can enter instance
 function EnhancedLockout:CanEnterInstance(instanceName, difficulty)
-    local status, available, lockoutData = self:GetLockoutStatus(instanceName, difficulty)
+    local status, available, lockoutData = self:GetLockoutStatus(instanceName, difficulty, nil)
     return available
 end
 
@@ -588,7 +626,7 @@ end
 
 -- Backward compatibility functions for existing RaidMount code
 function RaidMount.GetRaidLockout(instanceName)
-    return RaidMount.EnhancedLockout:GetLockoutStatus(instanceName)
+    return RaidMount.EnhancedLockout:GetLockoutStatus(instanceName, nil, nil)
 end
 
 function RaidMount.GetLockoutColor(instanceName, isRaid)
@@ -603,8 +641,8 @@ function RaidMount.CanEnterInstance(instanceName, difficulty)
     return RaidMount.EnhancedLockout:CanEnterInstance(instanceName, difficulty)
 end
 
-function RaidMount.GetDifficultyLockoutStatus(instanceName, difficultyID)
-    return RaidMount.EnhancedLockout:GetLockoutStatus(instanceName, difficultyID)
+function RaidMount.GetDifficultyLockoutStatus(instanceName, difficultyID, expansion)
+    return RaidMount.EnhancedLockout:GetLockoutStatus(instanceName, difficultyID, expansion)
 end
 
 function RaidMount.DebugLockouts()

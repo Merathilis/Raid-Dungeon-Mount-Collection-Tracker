@@ -100,20 +100,20 @@ local function GetDifficultyButtonText(difficultyID, contentType, mountData)
 end
 
 -- Helper function to check lockout status considering shared difficulties
-local function GetEffectiveLockoutStatus(raidName, difficultyID, sharedDifficulties)
+local function GetEffectiveLockoutStatus(raidName, difficultyID, sharedDifficulties, expansion)
     if not raidName or not RaidMount.GetDifficultyLockoutStatus then
         return true -- Assume available if we can't check
     end
 
     -- First check the direct difficulty
-    local lockoutTime, isAvailable = RaidMount.GetDifficultyLockoutStatus(raidName, difficultyID)
+    local lockoutTime, isAvailable = RaidMount.GetDifficultyLockoutStatus(raidName, difficultyID, expansion)
 
     -- If this difficulty is locked, check if any shared difficulties are also locked
     if not isAvailable and sharedDifficulties then
         for sharedDiffID, primaryDiffID in pairs(sharedDifficulties) do
             -- If this difficulty shares lockout with the primary, check the primary's status
             if sharedDiffID == difficultyID then
-                local primaryLockoutTime, primaryAvailable = RaidMount.GetDifficultyLockoutStatus(raidName, primaryDiffID)
+                local primaryLockoutTime, primaryAvailable = RaidMount.GetDifficultyLockoutStatus(raidName, primaryDiffID, expansion)
                 if not primaryAvailable then
                     return false -- Both are locked
                 end

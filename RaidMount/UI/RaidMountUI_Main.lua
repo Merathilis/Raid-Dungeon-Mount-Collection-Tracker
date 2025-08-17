@@ -158,8 +158,8 @@ function RaidMount.CreateColumnHeaders()
         { text = "Expansion",                pos = 570, width = 90,  align = "LEFT",   sortKey = "expansion" },
         { text = "Attempts",                 pos = 670, width = 50,  align = "CENTER", sortKey = "attempts" },
         { text = "Collected",                pos = 730, width = 50,  align = "CENTER", sortKey = "collected" },
-        { text = "Instance",               pos = 790, width = 120, align = "CENTER", sortKey = "lockoutStatus" },
-        { text = RaidMount.L("COORDINATES"), pos = 920, width = 80,  align = "CENTER", sortKey = "coordinates" }
+        { text = "Instance",               pos = 790, width = 120, align = "CENTER" },
+        { text = RaidMount.L("COORDINATES"), pos = 920, width = 60, align = "CENTER" }
     }
 
     local headerTexts = {}
@@ -179,40 +179,43 @@ function RaidMount.CreateColumnHeaders()
             print("RaidMount: Error - Failed to create header for column " .. column.text)
         end
 
-        local button = CreateFrame("Button", nil, headerFrame)
-        button:SetPoint("LEFT", headerFrame, "LEFT", column.pos, 0)
-        button:SetSize(column.width, 25)
+        -- Only create clickable buttons for columns with sortKey
+        if column.sortKey then
+            local button = CreateFrame("Button", nil, headerFrame)
+            button:SetPoint("LEFT", headerFrame, "LEFT", column.pos, 0)
+            button:SetSize(column.width, 25)
 
-        button:SetScript("OnEnter", function(self)
-            header:SetTextColor(1, 1, 0, 1)
-        end)
+            button:SetScript("OnEnter", function(self)
+                header:SetTextColor(1, 1, 0, 1)
+            end)
 
-        button:SetScript("OnLeave", function(self)
-            header:SetTextColor(0.8, 0.8, 0.8, 1)
-        end)
+            button:SetScript("OnLeave", function(self)
+                header:SetTextColor(0.8, 0.8, 0.8, 1)
+            end)
 
-        button:SetScript("OnClick", function()
-            if RaidMount.sortColumn == column.sortKey then
-                RaidMount.sortDescending = not RaidMount.sortDescending
-            else
-                RaidMount.sortColumn = column.sortKey
-                RaidMount.sortDescending = false
-            end
-
-            for j, headerData in ipairs(headerTexts) do
-                if headerData.sortKey == RaidMount.sortColumn then
-                    local arrowChar = RaidMount.sortDescending and " |TInterface\\Buttons\\Arrow-Down-Up:12:12|t" or
-                        " |TInterface\\Buttons\\Arrow-Up-Up:12:12|t"
-                    headerData.header:SetText(headerData.originalText .. arrowChar)
-                    headerData.header:SetTextColor(1, 0.8, 0, 1)
+            button:SetScript("OnClick", function()
+                if RaidMount.sortColumn == column.sortKey then
+                    RaidMount.sortDescending = not RaidMount.sortDescending
                 else
-                    headerData.header:SetText(headerData.originalText)
-                    headerData.header:SetTextColor(0.8, 0.8, 0.8, 1)
+                    RaidMount.sortColumn = column.sortKey
+                    RaidMount.sortDescending = false
                 end
-            end
 
-            if not RaidMount.isStatsView then RaidMount.PopulateUI() end
-        end)
+                for j, headerData in ipairs(headerTexts) do
+                    if headerData.sortKey == RaidMount.sortColumn then
+                        local arrowChar = RaidMount.sortDescending and " |TInterface\\Buttons\\Arrow-Down-Up:12:12|t" or
+                            " |TInterface\\Buttons\\Arrow-Up-Up:12:12|t"
+                        headerData.header:SetText(headerData.originalText .. arrowChar)
+                        headerData.header:SetTextColor(1, 0.8, 0, 1)
+                    else
+                        headerData.header:SetText(headerData.originalText)
+                        headerData.header:SetTextColor(0.8, 0.8, 0.8, 1)
+                    end
+                end
+
+                if not RaidMount.isStatsView then RaidMount.PopulateUI() end
+            end)
+        end
     end
 
     RaidMount.HeaderFrame = headerFrame
@@ -355,7 +358,7 @@ function RaidMount.CreateButtons()
     -- Version text
     local versionText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     versionText:SetPoint("BOTTOMLEFT", 10, 10)
-            versionText:SetText("|cFF666666Version: 21.07.25.35|r")
+            versionText:SetText("|cFF666666Version: 29.07.25.45|r")
     versionText:SetTextColor(0.4, 0.4, 0.4, 1)
 
     -- Enhanced tooltips checkbox

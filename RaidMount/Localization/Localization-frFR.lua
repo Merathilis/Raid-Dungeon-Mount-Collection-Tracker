@@ -55,8 +55,7 @@ local frFRLocale = {
     ["DESCRIPTION"] = "DESCRIPTION",
     ["TOTAL_ATTEMPTS"] = "Total des tentatives",
     ["MORE_CHARACTERS"] = " autres personnages",
-    ["COLLECTORS_BOUNTY"] = "Prime du collectionneur :",
-    ["COLLECTORS_BOUNTY_BONUS"] = "+5% de chance de drop",
+
     ["COLLECTED_ON"] = "Collecté :",
     ["NO_DESCRIPTION"] = "Aucune description disponible.",
     ["RAID"] = "Raid",

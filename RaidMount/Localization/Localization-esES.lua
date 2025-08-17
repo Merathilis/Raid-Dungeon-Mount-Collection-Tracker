@@ -55,8 +55,7 @@ local esESLocale = {
     ["DESCRIPTION"] = "DESCRIPCIÓN",
     ["TOTAL_ATTEMPTS"] = "Total de intentos",
     ["MORE_CHARACTERS"] = " personajes más",
-    ["COLLECTORS_BOUNTY"] = "Recompensa del coleccionista:",
-    ["COLLECTORS_BOUNTY_BONUS"] = "+5% probabilidad de drop",
+
     ["COLLECTED_ON"] = "Coleccionado:",
     ["NO_DESCRIPTION"] = "No hay descripción disponible.",
     ["RAID"] = "Banda",

@@ -55,8 +55,7 @@ local enUSLocale = {
     ["DESCRIPTION"] = "DESCRIPTION",
     ["TOTAL_ATTEMPTS"] = "Total Attempts",
     ["MORE_CHARACTERS"] = " more characters",
-    ["COLLECTORS_BOUNTY"] = "Collector's Bounty:",
-    ["COLLECTORS_BOUNTY_BONUS"] = "+5% drop chance",
+
     ["COLLECTED_ON"] = "Collected:",
     ["NO_DESCRIPTION"] = "No description available.",
     ["RAID"] = "Raid",

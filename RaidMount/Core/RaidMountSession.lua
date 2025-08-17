@@ -70,6 +70,189 @@ end
 local isInitialized = false
 local isDataLoaded = false
 
+-- Centralized function to get current character ID consistently
+function RaidMount.GetCurrentCharacterID()
+    local characterName = UnitName("player")
+    local realmName = GetRealmName()
+    
+    -- Normalize realm name to prevent inconsistencies
+    if not realmName or realmName == "Unknown" or realmName == "" then
+        return characterName
+    end
+    
+    return characterName .. "-" .. realmName
+end
+
+-- Clean up duplicate character entries in global mount data
+function RaidMount.CleanupDuplicateCharacterNames()
+    if not RaidMountAttempts then return end
+    
+    local cleanedCount = 0
+    
+    -- Iterate through all mount tracking keys
+    for trackingKey, attemptData in pairs(RaidMountAttempts) do
+        if type(attemptData) == "table" and attemptData.characters then
+            local characterMap = {}
+            local duplicates = {}
+            
+            -- Find duplicate character names within this mount
+            for charName, charData in pairs(attemptData.characters) do
+                local charNameOnly = charName:match("([^%-]+)") or charName
+                local realmName = charName:match("^[^%-]+%-([^%-]+)$") or "Unknown"
+                local normalizedName = charNameOnly .. "-" .. realmName
+                
+                if characterMap[normalizedName] then
+                    -- Found a duplicate
+                    table.insert(duplicates, {
+                        original = charName,
+                        normalized = normalizedName,
+                        existing = characterMap[normalizedName]
+                    })
+                else
+                    characterMap[normalizedName] = charName
+                end
+            end
+            
+            -- Merge duplicate entries
+            for _, duplicate in ipairs(duplicates) do
+                local originalData = attemptData.characters[duplicate.original]
+                local existingData = attemptData.characters[duplicate.existing]
+                
+                if originalData and existingData then
+                    local originalCount = 0
+                    local existingCount = 0
+                    
+                    -- Get attempt counts
+                    if type(originalData) == "number" then
+                        originalCount = originalData
+                    elseif type(originalData) == "table" and originalData.count then
+                        originalCount = originalData.count
+                    end
+                    
+                    if type(existingData) == "number" then
+                        existingCount = existingData
+                    elseif type(existingData) == "table" and existingData.count then
+                        existingCount = existingData.count
+                    end
+                    
+                    -- Merge counts
+                    local totalCount = originalCount + existingCount
+                    
+                    -- Update existing entry
+                    if type(existingData) == "number" then
+                        attemptData.characters[duplicate.existing] = totalCount
+                    elseif type(existingData) == "table" then
+                        existingData.count = totalCount
+                        -- Use the most recent date
+                        if originalData.lastUpdated and (not existingData.lastUpdated or originalData.lastUpdated > existingData.lastUpdated) then
+                            existingData.lastUpdated = originalData.lastUpdated
+                        end
+                    end
+                    
+                    -- Remove duplicate entry
+                    attemptData.characters[duplicate.original] = nil
+                    cleanedCount = cleanedCount + 1
+                end
+            end
+            
+            -- Also clean up lastAttemptDates if they exist
+            if attemptData.lastAttemptDates then
+                for charName, _ in pairs(attemptData.lastAttemptDates) do
+                    if not attemptData.characters[charName] then
+                        -- Remove date entry for character that no longer exists
+                        attemptData.lastAttemptDates[charName] = nil
+                    end
+                end
+            end
+            
+            -- Also clean up classes if they exist
+            if attemptData.classes then
+                for charName, _ in pairs(attemptData.classes) do
+                    if not attemptData.characters[charName] then
+                        -- Remove class entry for character that no longer exists
+                        attemptData.classes[charName] = nil
+                    end
+                end
+            end
+        end
+    end
+    
+    if cleanedCount > 0 then
+        RaidMount.PrintAddonMessage("Cleaned up " .. cleanedCount .. " duplicate character name entries")
+    end
+end
+
+-- Clean up duplicate character entries
+function RaidMount.CleanupDuplicateCharacters()
+    if not RaidMountAttempts then return end
+    
+    local characterMap = {}
+    local duplicates = {}
+    
+    -- Find all character entries and map them
+    for key, data in pairs(RaidMountAttempts) do
+        if type(key) == "string" and type(data) == "table" then
+            -- Check if this looks like a character name (contains a dash for realm)
+            if key:find("-") then
+                local charName, realmName = key:match("([^%-]+)%-([^%-]+)")
+                if charName and realmName then
+                    local normalizedKey = charName .. "-" .. realmName
+                    
+                    if characterMap[normalizedKey] then
+                        -- Found a duplicate
+                        table.insert(duplicates, {
+                            original = key,
+                            normalized = normalizedKey,
+                            existing = characterMap[normalizedKey]
+                        })
+                    else
+                        characterMap[normalizedKey] = key
+                    end
+                end
+            end
+        end
+    end
+    
+    -- Merge duplicate entries
+    for _, duplicate in ipairs(duplicates) do
+        local originalData = RaidMountAttempts[duplicate.original]
+        local existingData = RaidMountAttempts[duplicate.existing]
+        
+        if originalData and existingData then
+            -- Merge attempts data
+            if originalData.attempts and existingData.attempts then
+                for mountKey, attemptData in pairs(originalData.attempts) do
+                    if not existingData.attempts[mountKey] then
+                        existingData.attempts[mountKey] = attemptData
+                    else
+                        -- Merge attempt counts
+                        existingData.attempts[mountKey].count = 
+                            (existingData.attempts[mountKey].count or 0) + (attemptData.count or 0)
+                        -- Use the most recent date
+                        if attemptData.lastAttempt and (not existingData.attempts[mountKey].lastAttempt or 
+                           attemptData.lastAttempt > existingData.attempts[mountKey].lastAttempt) then
+                            existingData.attempts[mountKey].lastAttempt = attemptData.lastAttempt
+                            existingData.attempts[mountKey].lastAttemptDate = attemptData.lastAttemptDate
+                        end
+                    end
+                end
+            end
+            
+            -- Merge other data
+            if originalData.lastSeen and (not existingData.lastSeen or originalData.lastSeen > existingData.lastSeen) then
+                existingData.lastSeen = originalData.lastSeen
+            end
+            
+            -- Remove the duplicate entry
+            RaidMountAttempts[duplicate.original] = nil
+        end
+    end
+    
+    if #duplicates > 0 then
+        RaidMount.PrintAddonMessage("Cleaned up " .. #duplicates .. " duplicate character entries")
+    end
+end
+
 -- Initialize core addon functionality
 function RaidMount.InitializeCore()
     if isInitialized then return end
@@ -82,8 +265,18 @@ function RaidMount.InitializeCore()
         RaidMount.ClearTooltipCache()
     end
 
+    -- Clean up any duplicate character entries
+    if RaidMount.CleanupDuplicateCharacters then
+        RaidMount.CleanupDuplicateCharacters()
+    end
+    
+    -- Clean up duplicate character names in global mount data
+    if RaidMount.CleanupDuplicateCharacterNames then
+        RaidMount.CleanupDuplicateCharacterNames()
+    end
+
     -- NEW: Proper character-specific tracking
-    local currentCharacter = UnitFullName("player") -- Use UnitFullName for proper character identification
+    local currentCharacter = RaidMount.GetCurrentCharacterID() -- Use the new function
     if currentCharacter then
         -- Ensure character data structure exists
         if not RaidMountAttempts[currentCharacter] then
@@ -337,6 +530,21 @@ bossKillFrame:SetScript("OnEvent", function(self, event, ...)
         end
         return
     elseif event == "LOOT_OPENED" then
+        -- Scan loot window for mount items and play sound if found
+        local foundMount = false
+        for i = 1, GetNumLootItems() do
+            local link = GetLootSlotLink(i)
+            if link then
+                local itemID = select(1, GetItemInfoInstant(link))
+                if itemID and C_MountJournal and C_MountJournal.GetMountFromItem and C_MountJournal.GetMountFromItem(itemID) then
+                    foundMount = true
+                    break
+                end
+            end
+        end
+        if foundMount then
+            PlaySound(29117, "Master")
+        end
         return
     end
     

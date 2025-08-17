@@ -28,9 +28,21 @@ SlashCmdList["RAIDMOUNT"] = function(msg)
         else
             RaidMount.PrintAddonMessage("Character data refresh function not available", true)
         end
-    elseif command == "debug" then
-        -- Debug command removed for production
-        RaidMount.PrintAddonMessage("Debug command not available in production", true)
+    elseif command == "refreshlockouts" then
+        if RaidMount.EnhancedLockout and RaidMount.EnhancedLockout.RefreshLockouts then
+            RaidMount.EnhancedLockout:RefreshLockouts()
+            RaidMount.PrintAddonMessage("Forced lockout refresh completed", false)
+        else
+            RaidMount.PrintAddonMessage("Lockout refresh function not available", true)
+        end
+    elseif command == "refreshraidinfo" then
+        if RaidMount.EnhancedLockout and RaidMount.EnhancedLockout.GetEnhancedLockoutData then
+            local enhancedData = RaidMount.EnhancedLockout:GetEnhancedLockoutData()
+            RaidMount.PrintAddonMessage("Enhanced lockout data refresh completed. Found " .. #enhancedData .. " raids", false)
+        else
+            RaidMount.PrintAddonMessage("Enhanced lockout data function not available", true)
+        end
+
     elseif command == "characters" or command == "chars" then
         if RaidMount.UpdateCharacterChecker then
             RaidMount.UpdateCharacterChecker()
@@ -58,6 +70,20 @@ SlashCmdList["RAIDMOUNT"] = function(msg)
         else
             RaidMount.PrintAddonMessage("Dropdown test function not available", true)
         end
+    elseif command == "icecrown" or command == "icc" then
+        if RaidMount.CheckIcecrownLockout then
+            RaidMount.CheckIcecrownLockout()
+        else
+            RaidMount.PrintAddonMessage("Icecrown lockout check function not available", true)
+        end
+    elseif command == "cleanup" then
+        if RaidMount.CleanupDuplicateCharacters then
+            RaidMount.CleanupDuplicateCharacters()
+        end
+        if RaidMount.CleanupDuplicateCharacterNames then
+            RaidMount.CleanupDuplicateCharacterNames()
+        end
+        RaidMount.PrintAddonMessage("Character cleanup completed", false)
     else
         RaidMount.PrintAddonMessage(RaidMount.L("UNKNOWN_COMMAND", command), true)
     end
@@ -74,6 +100,12 @@ function RaidMount.ShowHelpCommands()
     print("|cFFFFFF00/rm verify|r - " .. RaidMount.L("HELP_VERIFY"))
     print("|cFFFFFF00/rm refreshchars|r - Refresh character mount data from Blizzard statistics")
     print("|cFFFFFF00/rm characters|r - Show character mount data status")
+    print("|cFFFFFF00/rm refreshlockouts|r - Force refresh lockout data")
+    print("|cFFFFFF00/rm refreshraidinfo|r - Force refresh raid info data")
+    print("|cFFFFFF00/rm debug|r - Debug lockout detection issues")
+    print("|cFFFFFF00/rm lockout <instance> [difficulty]|r - Check lockout status for any instance")
+    print("|cFFFFFF00/rm icecrown|r - Check Icecrown Citadel 25H lockout status")
+    print("|cFFFFFF00/rm cleanup|r - Clean up duplicate character entries")
     
     print("|cFFFFFF00/rm sound|r - Toggle mount drop sound notifications")
     print("|cFFFFFF00/rm testdropdowns|r - Test dropdown functionality")

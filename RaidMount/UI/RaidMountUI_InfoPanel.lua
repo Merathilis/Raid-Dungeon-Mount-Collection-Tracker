@@ -167,17 +167,10 @@ function RaidMount.CreateInfoPanel(frame)
     lockoutTimer:SetTextColor(1, 0.8, 0.2, 1)
     infoPanel.lockoutTimer = lockoutTimer
 
-    -- Add Collector's Bounty text element in the Status section
-    local bountyText = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    bountyText:SetPoint("TOPLEFT", lockoutTimer, "BOTTOMLEFT", 0, -2)
-    bountyText:SetFont(cachedFontPath, 16, "OUTLINE")
-    bountyText:SetJustifyH("LEFT")
-    bountyText:SetWidth(160)
-    bountyText:SetTextColor(1, 0.84, 0, 1) -- Gold color for bounty text
-    infoPanel.bountyText = bountyText
+
 
     local collectionDate = infoPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    collectionDate:SetPoint("TOPLEFT", bountyText, "BOTTOMLEFT", 0, -2)
+    collectionDate:SetPoint("TOPLEFT", lockoutTimer, "BOTTOMLEFT", 0, -2)
     collectionDate:SetFont(cachedFontPath, 13, "OUTLINE")
     collectionDate:SetJustifyH("LEFT")
     collectionDate:SetWidth(160)
@@ -315,69 +308,103 @@ function RaidMount.ShowInfoPanel(data)
     local trackingKey = data.spellID or data.mountID
     local attemptData = RaidMountAttempts and RaidMountAttempts[trackingKey]
     
-
+    -- Use character-specific data structure instead of global data
+    local currentCharacter = UnitFullName("player")
+    local characterAttempts = {}
+    local seenCharacters = {} -- Track normalized character names to prevent duplicates
     
-    if attemptData and type(attemptData) == "table" and attemptData.characters then
-        local characterAttempts = {}
-        local seenCharacters = {} -- Track normalized character names to prevent duplicates
-        
-        for charName, charData in pairs(attemptData.characters) do
-            local count = 0
-            if type(charData) == "number" then
-                -- Old format migration
-                count = charData
-            elseif type(charData) == "table" and charData.count then
-                -- New format
-                count = charData.count
+    -- First, try to get character-specific data (preferred method)
+    if currentCharacter and RaidMountAttempts[currentCharacter] and RaidMountAttempts[currentCharacter].attempts then
+        local charAttempts = RaidMountAttempts[currentCharacter].attempts[trackingKey]
+        if charAttempts and charAttempts.count and charAttempts.count > 0 then
+            local shortName = currentCharacter:match("([^%-]+)") or currentCharacter
+            if #shortName > 12 then shortName = shortName:sub(1, 12) end
+            
+            local lastAttemptDate = "Never"
+            if charAttempts.lastAttempt then
+                lastAttemptDate = date("%d/%m/%y", charAttempts.lastAttempt)
             end
             
-            -- Only show characters who have actually attempted this mount
-            if count > 0 then
-                -- Normalize character name to prevent duplicates
-                local charNameOnly = charName:match("([^%-]+)") or charName
-                local realmName = charName:match("^[^%-]+%-([^%-]+)$") or "Unknown"
-                local normalizedName = RaidMount.NormalizeCharacterID and RaidMount.NormalizeCharacterID(charNameOnly, realmName) or charNameOnly
+            -- Get class and color the name
+            local class = nil
+            if charAttempts.class then
+                class = charAttempts.class
+            end
+            
+            local color = GetClassColor(class)
+            local coloredName = "|cFF" .. color .. shortName .. "|r"
+            
+            table.insert(characterAttempts, {
+                name = coloredName,
+                count = charAttempts.count,
+                lastAttempt = lastAttemptDate,
+                normalizedName = currentCharacter
+            })
+        end
+    end
+    
+    -- Fallback to global data structure for other characters (legacy support)
+    if attemptData and type(attemptData) == "table" and attemptData.characters then
+        for charName, charData in pairs(attemptData.characters) do
+            -- Skip current character as we already handled it above
+            if charName ~= currentCharacter then
+                local count = 0
+                if type(charData) == "number" then
+                    -- Old format migration
+                    count = charData
+                elseif type(charData) == "table" and charData.count then
+                    -- New format
+                    count = charData.count
+                end
                 
-                -- Skip if we've already seen this character
-                if seenCharacters[normalizedName] then
-                    -- Merge attempts if duplicate found
-                    for _, existing in ipairs(characterAttempts) do
-                        if existing.normalizedName == normalizedName then
-                            existing.count = existing.count + count
-                            -- Use the most recent date
-                            local currentDate = attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] or "Never"
-                            if currentDate ~= "Never" and (existing.lastAttempt == "Never" or currentDate > existing.lastAttempt) then
-                                existing.lastAttempt = currentDate
+                -- Only show characters who have actually attempted this mount
+                if count > 0 then
+                    -- Normalize character name to prevent duplicates
+                    local charNameOnly = charName:match("([^%-]+)") or charName
+                    local realmName = charName:match("^[^%-]+%-([^%-]+)$") or "Unknown"
+                    local normalizedName = RaidMount.NormalizeCharacterID and RaidMount.NormalizeCharacterID(charNameOnly, realmName) or charNameOnly
+                    
+                    -- Skip if we've already seen this character
+                    if seenCharacters[normalizedName] then
+                        -- Merge attempts if duplicate found
+                        for _, existing in ipairs(characterAttempts) do
+                            if existing.normalizedName == normalizedName then
+                                existing.count = existing.count + count
+                                -- Use the most recent date
+                                local currentDate = attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] or "Never"
+                                if currentDate ~= "Never" and (existing.lastAttempt == "Never" or currentDate > existing.lastAttempt) then
+                                    existing.lastAttempt = currentDate
+                                end
+                                break
                             end
-                            break
                         end
+                    else
+                        seenCharacters[normalizedName] = true
+                        
+                        local shortName = charNameOnly
+                        if #shortName > 12 then shortName = shortName:sub(1, 12) end
+                        
+                        local lastAttemptDate = "Never"
+                        if attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] then
+                            lastAttemptDate = attemptData.lastAttemptDates[charName]
+                        end
+                        
+                        -- Get class and color the name
+                        local class = nil
+                        if attemptData.classes and attemptData.classes[charName] then
+                            class = attemptData.classes[charName]
+                        end
+                        
+                        local color = GetClassColor(class)
+                        local coloredName = "|cFF" .. color .. shortName .. "|r"
+                        
+                        table.insert(characterAttempts, {
+                            name = coloredName,
+                            count = count,
+                            lastAttempt = lastAttemptDate,
+                            normalizedName = normalizedName
+                        })
                     end
-                else
-                    seenCharacters[normalizedName] = true
-                    
-                    local shortName = charNameOnly
-                    if #shortName > 12 then shortName = shortName:sub(1, 12) end
-                    
-                    local lastAttemptDate = "Never"
-                    if attemptData.lastAttemptDates and attemptData.lastAttemptDates[charName] then
-                        lastAttemptDate = attemptData.lastAttemptDates[charName]
-                    end
-                    
-                    -- Get class and color the name
-                    local class = nil
-                    if attemptData.classes and attemptData.classes[charName] then
-                        class = attemptData.classes[charName]
-                    end
-                    
-                    local color = GetClassColor(class)
-                    local coloredName = "|cFF" .. color .. shortName .. "|r"
-                    
-                    table.insert(characterAttempts, {
-                        name = coloredName,
-                        count = count,
-                        lastAttempt = lastAttemptDate,
-                        normalizedName = normalizedName
-                    })
                 end
             end
         end
@@ -436,13 +463,7 @@ function RaidMount.ShowInfoPanel(data)
     local isLockedOut = false
     local lockoutTimerText = "Available now"
     
-    -- Add Collector's Bounty information
-    if data.collectorsBounty then
-        panel.bountyText:SetText("|cFFFFD700[Collector's Bounty]|r")
-        panel.bountyText:Show()
-    else
-        panel.bountyText:Hide()
-    end
+
 
     -- Get current lockout information using the new function
     if data.raidName then
@@ -471,7 +492,7 @@ function RaidMount.ShowInfoPanel(data)
                 end
                 
                 if difficultyName then
-                    local lockoutTime, canEnter = RaidMount.GetDifficultyLockoutStatus(data.raidName, diffID)
+                    local lockoutTime, canEnter = RaidMount.GetDifficultyLockoutStatus(data.raidName, diffID, data.expansion)
                     table.insert(allLockoutInfo, {
                         difficulty = difficultyName,
                         canEnter = canEnter,
@@ -540,7 +561,7 @@ function RaidMount.ShowInfoPanel(data)
         -- No raid name - fallback to addon tracking
         local trackingKey = data.spellID or data.mountID
         local attemptData = RaidMountAttempts and RaidMountAttempts[trackingKey]
-        local currentCharacter = UnitName("player") .. "-" .. GetRealmName()
+        local currentCharacter = RaidMount.GetCurrentCharacterID()
         if attemptData and attemptData.lastAttemptDates and attemptData.lastAttemptDates[currentCharacter] then
             local lastAttemptDate = attemptData.lastAttemptDates[currentCharacter]
             -- Parse the date (assuming format is dd/mm/yy)
@@ -587,18 +608,7 @@ function RaidMount.ShowInfoPanel(data)
         end
     end
     
-    -- Add Collector's Bounty information in the Status section
-    if data.collectorsBounty then
-        local bountyText
-        if data.collectorsBounty == true then
-            bountyText = "|cFFFFD700" .. RaidMount.L("COLLECTORS_BOUNTY") .. "|r |cFF00FF00" .. RaidMount.L("COLLECTORS_BOUNTY_BONUS") .. "|r"
-        else
-            bountyText = "|cFFFFD700Collector's Bounty:|r |cFFFFFF00" .. data.collectorsBounty .. "|r"
-        end
-        panel.bountyText:SetText(bountyText)
-    else
-        panel.bountyText:SetText("")
-    end
+
     
     if data.collected then
         local collectionText = data.collectionDate or "Unknown Date"

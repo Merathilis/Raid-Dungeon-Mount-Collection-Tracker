@@ -43,7 +43,14 @@ function RaidMount.InitializeSavedVariables()
             currentSessionID = 1,
             lastSessionTime = 0,
             loggedCharacters = {},
-            minimap = { angle = 0 }
+            minimap = { angle = 0 },
+            filters = {
+                currentFilter = "All",
+                currentExpansionFilter = "All",
+                currentContentTypeFilter = "All",
+                currentDifficultyFilter = "All",
+                currentSearch = ""
+            }
         }
     end
 
@@ -57,7 +64,14 @@ function RaidMount.InitializeSavedVariables()
         currentSessionID = 1,
         lastSessionTime = 0,
         loggedCharacters = {},
-        minimap = { angle = 0 }
+        minimap = { angle = 0 },
+        filters = {
+            currentFilter = "All",
+            currentExpansionFilter = "All",
+            currentContentTypeFilter = "All",
+            currentDifficultyFilter = "All",
+            currentSearch = ""
+        }
     }
 
     for key, defaultValue in pairs(defaults) do
@@ -65,6 +79,24 @@ function RaidMount.InitializeSavedVariables()
             RaidMountSaved[key] = defaultValue
         end
     end
+
+    -- Initialize filters if not present
+    if not RaidMountSaved.filters then
+        RaidMountSaved.filters = {
+            currentFilter = "All",
+            currentExpansionFilter = "All",
+            currentContentTypeFilter = "All",
+            currentDifficultyFilter = "All",
+            currentSearch = ""
+        }
+    end
+
+    -- Load saved filter settings
+    RaidMount.currentFilter = RaidMountSaved.filters.currentFilter or "All"
+    RaidMount.currentExpansionFilter = RaidMountSaved.filters.currentExpansionFilter or "All"
+    RaidMount.currentContentTypeFilter = RaidMountSaved.filters.currentContentTypeFilter or "All"
+    RaidMount.currentDifficultyFilter = RaidMountSaved.filters.currentDifficultyFilter or "All"
+    RaidMount.currentSearch = RaidMountSaved.filters.currentSearch or ""
 
     -- Initialize settings with validation
     if not RaidMountSettings then
@@ -105,6 +137,17 @@ function RaidMount.InitializeSavedVariables()
     RaidMountTooltipEnabled = RaidMountSaved.enhancedTooltip
     currentSessionID = RaidMountSaved.currentSessionID
     lastSessionTime = RaidMountSaved.lastSessionTime
+end
+
+-- Save filter settings to SavedVariables
+function RaidMount.SaveFilterSettings()
+    if RaidMountSaved and RaidMountSaved.filters then
+        RaidMountSaved.filters.currentFilter = RaidMount.currentFilter or "All"
+        RaidMountSaved.filters.currentExpansionFilter = RaidMount.currentExpansionFilter or "All"
+        RaidMountSaved.filters.currentContentTypeFilter = RaidMount.currentContentTypeFilter or "All"
+        RaidMountSaved.filters.currentDifficultyFilter = RaidMount.currentDifficultyFilter or "All"
+        RaidMountSaved.filters.currentSearch = RaidMount.currentSearch or ""
+    end
 end
 
 -- Get Attempt Count (HYBRID APPROACH)
@@ -223,7 +266,7 @@ function RaidMount.GetCharacterLockouts(raidName, difficultyID)
     -- For now, only show current character's lockout status
     -- Future enhancement: Add support for checking other characters' lockouts
     local currentCharacter = UnitName("player")
-    local timeRemaining, canEnter = RaidMount.GetDifficultyLockoutStatus(raidName, difficultyID)
+    local timeRemaining, canEnter = RaidMount.GetDifficultyLockoutStatus(raidName, difficultyID, nil)
     
     if not canEnter and timeRemaining and timeRemaining ~= "No lockout" then
         table.insert(characterLockouts, {

@@ -15,7 +15,7 @@ end
 function RaidMount.PopulateCharacterMountData()
     if not RaidMount.mountInstances then return end
     
-    local currentCharacter = UnitName("player") .. "-" .. GetRealmName()
+    local currentCharacter = RaidMount.GetCurrentCharacterID()
     local characterClass = select(2, UnitClass("player"))
     
     -- Ensure character is logged in RaidMountSaved
@@ -289,7 +289,7 @@ end
 
 -- NEW: Record mount attempt for current character (HYBRID APPROACH)
 function RaidMount.RecordMountAttempt(mount, currentTime)
-    local currentCharacter = UnitFullName("player")
+    local currentCharacter = RaidMount.GetCurrentCharacterID()
     if not currentCharacter then return end
     
     local trackingKey = mount.spellID

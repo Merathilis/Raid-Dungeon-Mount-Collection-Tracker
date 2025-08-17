@@ -94,7 +94,7 @@ local function GetAccountWideData(trackingKey)
         }
     end
     
-    local currentPlayer = UnitName("player") .. "-" .. GetRealmName()
+    local currentPlayer = RaidMount.GetCurrentCharacterID()
     local accountData = RaidMountAttempts[trackingKey]
     
     if not accountData.characters then
@@ -194,12 +194,7 @@ function RaidMount.BuildSearchIndex()
             table.insert(searchableText, mount.contentType:lower())
         end
         
-        -- Add Collector's Bounty to searchable text
-        if mount.collectorsBounty and mount.collectorsBounty ~= false then
-            table.insert(searchableText, "collector's bounty")
-            table.insert(searchableText, "bounty")
-            table.insert(searchableText, "collector")
-        end
+
         
         -- Create search index for this mount
         searchIndex[i] = {
@@ -245,23 +240,7 @@ end
 -- Timer management is handled by Core/RaidMountSession.lua
 -- This module delegates to the core implementation
 
--- Debug function to verify Collector's Bounty detection
-function RaidMount.DebugCollectorsBounty()
-    if not RaidMount.mountInstances then return end
-    
-    local bountyCount = 0
-    local totalCount = 0
-    
-    for _, mount in ipairs(RaidMount.mountInstances) do
-        totalCount = totalCount + 1
-        if mount.collectorsBounty and mount.collectorsBounty ~= false then
-            bountyCount = bountyCount + 1
-            print("Collector's Bounty mount found: " .. (mount.mountName or "Unknown"))
-        end
-    end
-    
-    print("Total mounts: " .. totalCount .. ", Collector's Bounty mounts: " .. bountyCount)
-end
+
 
 
 

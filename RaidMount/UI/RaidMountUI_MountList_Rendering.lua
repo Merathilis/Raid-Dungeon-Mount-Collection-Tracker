@@ -379,11 +379,11 @@ function RaidMount.UpdateRowContent(row, data)
                 if shouldShowCombined then
                     -- For combined buttons, check the primary difficulty (usually the first one)
                     local primaryDiffID = difficultyIDs[1]
-                    isAvailable = RaidMount.GetEffectiveLockoutStatus(data.raidName, primaryDiffID, sharedDifficulties)
+                    isAvailable = RaidMount.GetEffectiveLockoutStatus(data.raidName, primaryDiffID, sharedDifficulties, data.expansion)
                 else
                     -- For individual buttons, check the specific difficulty
                     local diffID = difficultyIDs[i]
-                    isAvailable = RaidMount.GetEffectiveLockoutStatus(data.raidName, diffID, sharedDifficulties)
+                    isAvailable = RaidMount.GetEffectiveLockoutStatus(data.raidName, diffID, sharedDifficulties, data.expansion)
                 end
             end
             
@@ -442,13 +442,81 @@ function RaidMount.UpdateRowContent(row, data)
                             elseif difficultyKey == "Mythic" then
                                 SetRaidDifficultyID(16)
                             elseif difficultyKey == "Legacy10" then
-                                SetRaidDifficultyID(3)
+                                -- For legacy 10-man, use the legacy difficulty system
+                                -- Legacy raids often require manual difficulty selection
+                                
+                                -- Try the legacy API call first, then fallback to regular API
+                                if SetLegacyRaidDifficultyID then
+                                    SetLegacyRaidDifficultyID(3)
+                                else
+                                    SetRaidDifficultyID(3)
+                                end
+                                
+                                -- Check if it actually worked
+                                C_Timer.After(0.1, function()
+                                    local currentDifficulty = select(3, GetInstanceInfo())
+                                    if currentDifficulty ~= 3 then
+                                        -- Legacy difficulty setting failed - provide simple message
+                                        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CCFFRaidMount:|r Legacy difficulty may need manual selection.")
+                                    end
+                                end)
                             elseif difficultyKey == "Legacy25" then
-                                SetRaidDifficultyID(4)
+                                -- For legacy 25-man, use the legacy difficulty system
+                                -- Legacy raids often require manual difficulty selection
+                                
+                                -- Try the legacy API call first, then fallback to regular API
+                                if SetLegacyRaidDifficultyID then
+                                    SetLegacyRaidDifficultyID(4)
+                                else
+                                    SetRaidDifficultyID(4)
+                                end
+                                
+                                -- Check if it actually worked
+                                C_Timer.After(0.1, function()
+                                    local currentDifficulty = select(3, GetInstanceInfo())
+                                    if currentDifficulty ~= 4 then
+                                        -- Legacy difficulty setting failed - provide simple message
+                                        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CCFFRaidMount:|r Legacy difficulty may need manual selection.")
+                                    end
+                                end)
                             elseif difficultyKey == "Legacy10H" then
-                                SetRaidDifficultyID(5)
+                                -- For legacy 10-man Heroic, use the legacy difficulty system
+                                -- Legacy raids often require manual difficulty selection
+                                
+                                -- Try the legacy API call first, then fallback to regular API
+                                if SetLegacyRaidDifficultyID then
+                                    SetLegacyRaidDifficultyID(5)
+                                else
+                                    SetRaidDifficultyID(5)
+                                end
+                                
+                                -- Check if it actually worked
+                                C_Timer.After(0.1, function()
+                                    local currentDifficulty = select(3, GetInstanceInfo())
+                                    if currentDifficulty ~= 5 then
+                                        -- Legacy difficulty setting failed - provide simple message
+                                        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CCFFRaidMount:|r Legacy difficulty may need manual selection.")
+                                    end
+                                end)
                             elseif difficultyKey == "Legacy25H" then
-                                SetRaidDifficultyID(6)
+                                -- For legacy 25-man Heroic, use the legacy difficulty system
+                                -- Legacy raids often require manual difficulty selection
+                                
+                                -- Try the legacy API call first, then fallback to regular API
+                                if SetLegacyRaidDifficultyID then
+                                    SetLegacyRaidDifficultyID(6)
+                                else
+                                    SetRaidDifficultyID(6)
+                                end
+                                
+                                -- Check if it actually worked
+                                C_Timer.After(0.1, function()
+                                    local currentDifficulty = select(3, GetInstanceInfo())
+                                    if currentDifficulty ~= 6 then
+                                        -- Legacy difficulty setting failed - provide simple message
+                                        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CCFFRaidMount:|r Legacy difficulty may need manual selection.")
+                                    end
+                                end)
                             end
                         end
                         
@@ -457,6 +525,10 @@ function RaidMount.UpdateRowContent(row, data)
                         local instanceName = data.raidName or data.instanceName or "Unknown Instance"
                         DEFAULT_CHAT_FRAME:AddMessage(string.format(
                             "|cFF33CCFFRaidMount:|r " .. RaidMount.L("DIFFICULTY_SET", instanceName, difficultyName)))
+                    else
+                        -- Legacy difficulty setting failed - provide simple message
+                        local instanceName = data.raidName or data.instanceName or "this instance"
+                        DEFAULT_CHAT_FRAME:AddMessage("|cFF33CCFFRaidMount:|r Legacy difficulty may need manual selection for " .. instanceName)
                     end
                 end
             end)

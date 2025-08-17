@@ -55,8 +55,7 @@ local deDELocale = {
     ["DESCRIPTION"] = "BESCHREIBUNG",
     ["TOTAL_ATTEMPTS"] = "Gesamte Versuche",
     ["MORE_CHARACTERS"] = " weitere Charaktere",
-    ["COLLECTORS_BOUNTY"] = "Sammler-Bonus:",
-    ["COLLECTORS_BOUNTY_BONUS"] = "+5% Drop-Chance",
+
     ["COLLECTED_ON"] = "Gesammelt:",
     ["NO_DESCRIPTION"] = "Keine Beschreibung verfügbar.",
     ["RAID"] = "Schlachtzug",

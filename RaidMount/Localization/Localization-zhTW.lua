@@ -55,8 +55,7 @@ local zhTWLocale = {
     ["DESCRIPTION"] = "描述",
     ["TOTAL_ATTEMPTS"] = "總嘗試次數",
     ["MORE_CHARACTERS"] = " 個更多角色",
-    ["COLLECTORS_BOUNTY"] = "收藏家獎勵：",
-    ["COLLECTORS_BOUNTY_BONUS"] = "+5%掉落幾率",
+
     ["COLLECTED_ON"] = "收集於：",
     ["NO_DESCRIPTION"] = "暫無描述。",
     ["RAID"] = "團隊副本",

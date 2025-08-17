@@ -228,7 +228,7 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
                 end
 
                 if difficultyName then
-                    local lockoutTime, canEnter = RaidMount.GetDifficultyLockoutStatus(mount.raidName, diffID)
+                    local lockoutTime, canEnter = RaidMount.GetDifficultyLockoutStatus(mount.raidName, diffID, mount.expansion)
                     table.insert(allLockoutInfo, {
                         difficulty = difficultyName,
                         canEnter = canEnter,
@@ -396,17 +396,7 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
         GameTooltip:AddLine(dropText, 1, 1, 1)
         table.insert(tooltipData, { type = "text", text = dropText, color = { 1, 1, 1 } })
 
-        -- Add Collector's Bounty information if present
-        if mount.collectorsBounty then
-            local bountyText
-            if mount.collectorsBounty == true then
-                bountyText = "|cFF00FF00Collector's Bounty:|r +5% drop chance"
-            else
-                bountyText = "|cFFFFFF00Collector's Bounty:|r " .. mount.collectorsBounty
-            end
-            GameTooltip:AddLine(bountyText, 1, 1, 1)
-            table.insert(tooltipData, { type = "text", text = bountyText, color = { 1, 1, 1 } })
-        end
+
     end
 
     local attempts = mount.attempts or 0
@@ -497,7 +487,8 @@ function RaidMount.ShowTooltip(frame, mount, lockoutStatus)
             
             if crossCharSummary and crossCharSummary.totalLocked > 0 then
                 -- Get current character key to filter it out
-                local currentCharKey = UnitName("player") .. "-" .. GetRealmName()
+                local currentCharKey = RaidMount.GetCurrentCharacterID()
+                local currentCharAttempts = 0
                 
                 -- Filter out current character from the list
                 local otherLockedChars = {}
@@ -633,7 +624,7 @@ function RaidMount.ShowMiniTooltip(self, mount)
     local nameColor = RaidMount.GetMountNameColor(mount)
     GameTooltip:SetText(nameColor .. (mount.mountName or "Unknown") .. "|r")
 
-    local attempts = RaidMount.GetAttempts(mount.MountID) or 0
+    local attempts = RaidMount.GetAttempts(mount) or 0
     GameTooltip:AddLine("Attempts: " .. attempts, 1, 1, 0)
 
     if mount.collected then

@@ -2,7 +2,7 @@
 ## Notes: Tracks raid and dungeon mount attempts, collections, and lockouts with modernized UI and enhanced features.
 ## Interface: 110107, 110200
 ## Author: knutballs @EU Ravencrest
-## Version: 21.07.25.31
+## Version: 29.07.25.45
 ## SavedVariables: RaidMountAttempts, RaidMountSettings, RaidMountSaved
 
 ## X-Category: Boss Encounters

@@ -55,8 +55,7 @@ local ruRULocale = {
     ["DESCRIPTION"] = "ОПИСАНИЕ",
     ["TOTAL_ATTEMPTS"] = "Всего попыток",
     ["MORE_CHARACTERS"] = " персонажей еще",
-    ["COLLECTORS_BOUNTY"] = "Награда коллекционера:",
-    ["COLLECTORS_BOUNTY_BONUS"] = "+5% шанс выпадения",
+
     ["COLLECTED_ON"] = "Получен:",
     ["NO_DESCRIPTION"] = "Описание недоступно.",
     ["RAID"] = "Рейд",

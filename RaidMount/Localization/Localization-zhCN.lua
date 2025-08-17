@@ -55,8 +55,7 @@ local zhCNLocale = {
     ["DESCRIPTION"] = "描述",
     ["TOTAL_ATTEMPTS"] = "总尝试次数",
     ["MORE_CHARACTERS"] = " 个更多角色",
-    ["COLLECTORS_BOUNTY"] = "收藏家奖励：",
-    ["COLLECTORS_BOUNTY_BONUS"] = "+5%掉落几率",
+
     ["COLLECTED_ON"] = "收集于：",
     ["NO_DESCRIPTION"] = "暂无描述。",
     ["RAID"] = "团队副本",
