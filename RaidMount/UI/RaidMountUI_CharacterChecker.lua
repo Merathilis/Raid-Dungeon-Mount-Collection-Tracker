@@ -2,12 +2,15 @@
 local addonName, RaidMount = ...
 RaidMount = RaidMount or {}
 
+local E = unpack(ElvUI)
+local S = E:GetModule("Skins")
+
 -- Character Data Checker Frame
 local characterCheckerFrame = nil
 local cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
 -- Create the character checker frame
-local function CreateCharacterCheckerFrame()
+function RaidMount.CreateCharacterCheckerFrame()
     if characterCheckerFrame then return characterCheckerFrame end
     
     characterCheckerFrame = CreateFrame("Frame", "RaidMountCharacterChecker", UIParent, "BackdropTemplate")
@@ -31,6 +34,9 @@ local function CreateCharacterCheckerFrame()
     characterCheckerFrame:RegisterForDrag("LeftButton")
     characterCheckerFrame:SetScript("OnDragStart", characterCheckerFrame.StartMoving)
     characterCheckerFrame:SetScript("OnDragStop", characterCheckerFrame.StopMovingOrSizing)
+    if E then
+        characterCheckerFrame:SetTemplate("Transparent")
+    end
     characterCheckerFrame:Hide()
     
     -- Title
@@ -38,12 +44,19 @@ local function CreateCharacterCheckerFrame()
     title:SetPoint("TOP", characterCheckerFrame, "TOP", 0, -15)
     title:SetFont(cachedFontPath, 24, "OUTLINE")
     title:SetText("|cFF33CCFFRaid|r and |cFF33CCFFDungeon|r |cFFFF0000Mount|r |cFFFFD700Tracker|r - Alt Data")
-    characterCheckerFrame.title = title
+    characterCheckerFrame.Title = title
+    if E then
+        title:FontTemplate(nil, 16, "OUTLINE")
+    end
     
     -- Close button
     local closeButton = CreateFrame("Button", nil, characterCheckerFrame, "UIPanelCloseButton")
     closeButton:SetPoint("TOPRIGHT", characterCheckerFrame, "TOPRIGHT", -5, -5)
     closeButton:SetScript("OnClick", function() characterCheckerFrame:Hide() end)
+    characterCheckerFrame.CloseButton = closeButton
+    if E then
+        S:HandleCloseButton(closeButton)
+    end
     
     -- Add a subtitle for instructions
     local subtitle = characterCheckerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -51,6 +64,10 @@ local function CreateCharacterCheckerFrame()
     subtitle:SetFont(cachedFontPath, 12, "OUTLINE")
     subtitle:SetText("|cFF999999Alt mount attempt data|r")
     subtitle:SetTextColor(0.6, 0.6, 0.6, 1)
+    characterCheckerFrame.SubTitle = subtitle
+    if E then
+        subtitle:FontTemplate()
+    end
     
     -- Scroll frame for character list (adjusted to make room for buttons)
     local scrollFrame = CreateFrame("ScrollFrame", nil, characterCheckerFrame, "UIPanelScrollFrameTemplate")
@@ -60,6 +77,9 @@ local function CreateCharacterCheckerFrame()
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetSize(350, 800)
     scrollFrame:SetScrollChild(scrollChild)
+    if E then
+        S:HandleScrollBar(scrollFrame.ScrollBar)
+    end
     
     characterCheckerFrame.scrollFrame = scrollFrame
     characterCheckerFrame.scrollChild = scrollChild
@@ -88,8 +108,15 @@ local function CreateCharacterCheckerFrame()
             print("|cFF33CCFFRaid|r|cFFFF0000Mount|r: Verify function not available.")
         end
     end)
-    
 
+    characterCheckerFrame.RefreshButton = refreshButton
+    characterCheckerFrame.VerifyButton = verifyButton
+    if E then
+        S:HandleButton(refreshButton)
+        S:HandleButton(verifyButton)
+    end
+
+    RaidMount.CharacterChecker = characterCheckerFrame
     
     return characterCheckerFrame
 end
@@ -205,7 +232,7 @@ end
 
 -- Update character checker display
 function RaidMount.UpdateCharacterChecker()
-    local frame = CreateCharacterCheckerFrame()
+    local frame = RaidMount.CreateCharacterCheckerFrame()
     local scrollChild = frame.scrollChild
     
     -- Clear existing content
@@ -382,7 +409,7 @@ function RaidMount.UpdateCharacterChecker()
         noDataText:SetFont(cachedFontPath, 14, "OUTLINE")
         noDataText:SetText("|cFF999999No alt data found. Use /rm refresh on each character.|r")
     end
-    
+
     frame:Show()
 end
 

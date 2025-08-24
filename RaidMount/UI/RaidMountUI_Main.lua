@@ -246,6 +246,7 @@ function RaidMount.CreateMainFrame()
     title:SetPoint("TOP", 0, -15)
     title:SetText("|cFF33CCFFRaid|r and |cFF33CCFFDungeon|r |cFFFF0000Mount|r |cFFFFD700Tracker|r")
     title:SetFont(RaidMount.cachedFontPath, 24, "OUTLINE")
+    frame.Title = title
 
     -- Make frame movable
     frame:SetMovable(true)
@@ -258,6 +259,7 @@ function RaidMount.CreateMainFrame()
     local closeButton = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
     closeButton:SetPoint("TOPRIGHT", -5, -5)
     closeButton:SetScript("OnClick", function() RaidMount.HideUI() end)
+    frame.CloseButton = closeButton
 
     RaidMount.RaidMountFrame = frame
 
@@ -269,6 +271,9 @@ function RaidMount.CreateMainFrame()
     RaidMount.CreateButtons()
     RaidMount.CreateInfoPanel(frame)
     RaidMount.CreateFilterStatusDisplay(frame)
+
+    -- ElvUI Skinning
+    RaidMount.ElvUI()
 
     return frame
 end
@@ -434,6 +439,7 @@ function RaidMount.CreateButtons()
     frame.tooltipCheckbox = tooltipCheckbox
     frame.soundCheckbox = soundCheckbox
     frame.popupCheckbox = popupCheckbox
+    frame.charCheckerButton = charCheckerButton
 end
 
 -- UPDATE HEADER DISPLAY

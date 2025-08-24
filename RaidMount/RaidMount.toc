@@ -52,6 +52,7 @@ UI/RaidMountUI_InfoPanel.lua
 UI/RaidMountUI_IconView.lua
 UI/RaidMountUI_CharacterChecker.lua
 UI/RaidMountUI.lua
+UI/RaidMountUI_ElvUI.lua
 
 # Coordinates file (load after main addon is initialized)
 Data/RaidMountCoordinates.lua

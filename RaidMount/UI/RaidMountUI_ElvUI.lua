@@ -9,10 +9,7 @@ function RaidMount.SkinMainFrame()
 	local frame = RaidMount.RaidMountFrame
 	if not frame then return end
 
-	frame:StripTextures()
-	frame:SetTemplate("Transparent")
-	S:HandleCloseButton(frame.CloseButton)
-	frame.Title:FontTemplate(nil, 26)
+	S:HandleFrame(frame)
 end
 
 function RaidMount.SkinHeaderFrame()
@@ -86,19 +83,29 @@ function RaidMount.SkinButtons()
 	if not frame then return end
 
 	local statsBtn = frame.StatsButton
-	S:HandleButton(statsBtn)
+	if statsBtn then
+		S:HandleButton(statsBtn)
+	end
 
 	local tooltipCheckbox = frame.tooltipCheckbox
-	S:HandleCheckBox(tooltipCheckbox)
+	if tooltipCheckbox then
+		S:HandleCheckBox(tooltipCheckbox)
+	end
 
 	local soundCheckbox = frame.soundCheckbox
-	S:HandleCheckBox(soundCheckbox)
+	if soundCheckbox then
+		S:HandleCheckBox(soundCheckbox)
+	end
 
 	local popupCheckbox = frame.popupCheckbox
-	S:HandleCheckBox(popupCheckbox)
+	if popupCheckbox then
+		S:HandleCheckBox(popupCheckbox)
+	end
 
 	local charCheckerButton = frame.charCheckerButton
-	S:HandleButton(charCheckerButton)
+	if charCheckerButton then
+		S:HandleButton(charCheckerButton)
+	end
 end
 
 function RaidMount.ElvUI()
