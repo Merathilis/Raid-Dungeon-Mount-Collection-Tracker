@@ -23,8 +23,7 @@ RaidMount.COLORS = {
 
 RaidMount.cachedFontPath = "Fonts\\FRIZQT__.TTF"
 
-function RaidMount.PrintAddonMessage(message, isError)
-end
+-- PrintAddonMessage is handled by RaidMount.lua
 
 function RaidMount.CreateStyledBackground(parent, color, hoverColor)
 	local bg = parent:CreateTexture(nil, "BACKGROUND")
